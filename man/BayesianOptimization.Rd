@@ -42,7 +42,7 @@ This table should be obtained from the file saved by \code{saveIntermediate}.}
 
 \item{initialize}{should the process initialize a parameter-Score pair set? If \code{FALSE}, \code{leftOff} must be provided.}
 
-\item{initGrid}{user specified points to sample the target function, should
+\item{initGrid}{user specified points to sample the scoring function, should
 be a \code{data.frame} or \code{data.table} with identical column names as bounds.}
 
 \item{initPoints}{number of randomly chosen points to sample the
@@ -74,10 +74,11 @@ scoring function before Bayesian Optimization fitting the Gaussian Process.}
 \item{stopImpatient}{a list containing \code{rounds} and \code{newAcq}, if \code{acq = "eips"} you
 can switch the acquisition function to \code{newAcq} after \code{rounds} parameter-score pairs are found.}
 
-\item{kappa}{tunable parameter kappa of GP Upper Confidence Bound, to balance exploitation against exploration,
-increasing kappa will incentivise exploration.}
+\item{kappa}{tunable parameter kappa of the upper confidence bound. Tunes exploitation/exploration.
+Increasing kappa will increase the importance that variance (unexplored space) has, therefore
+incentivising exploration.}
 
-\item{eps}{tunable parameter epsilon of ei, eips and poi. Balances exploitation against exploration.
+\item{eps}{tunable parameter epsilon of ei, eips and poi. Tunes exploitation/exploration.
 Increasing eps will make the "improvement" threshold higher.}
 
 \item{gsPoints}{integer that specifies how many initial points to try when searching for the optimal parameter set.
@@ -101,7 +102,8 @@ If 1, progress will be printed. If 2, progress and information about new paramet
 }
 \value{
 A list containing details about the process:
-\item{GPlist}{The list of the gaussian process objects that were fit.}
+\item{GPs}{The last Gaussian Process run on the parameter-score pairs}
+\item{GPe}{If \code{acq = "eips"}, this contains the last Gaussian Process run on the parameter-elapsed time pairs}
 \item{acqMaximums}{The optimal parameters according to each gaussian process}
 \item{ScoreDT}{A list of all parameter-score pairs, as well as extra columns from FUN}
 \item{BestPars}{The best parameter set at each iteration}
