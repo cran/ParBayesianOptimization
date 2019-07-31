@@ -7,19 +7,20 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <meta name="author" content="Samuel Wilson" />
 
-<meta name="date" content="2019-03-10" />
+<meta name="date" content="2019-07-30" />
 
 <title>Introduction to ParBayesianOptimization</title>
 
 
 
 <style type="text/css">code{white-space: pre;}</style>
-<style type="text/css">
+<style type="text/css" data-origin="pandoc">
 a.sourceLine { display: inline-block; line-height: 1.25; }
 a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
 a.sourceLine:empty { height: 1.2em; }
@@ -81,7 +82,29 @@ code span.st { color: #4070a0; } /* String */
 code span.va { color: #19177c; } /* Variable */
 code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
 </style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
 
 
 
@@ -269,6 +292,9 @@ code > span.al { color: #ff0000; font-weight: bold; }
 code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
 
+
+
+
 </head>
 
 <body>
@@ -277,8 +303,8 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 
 <h1 class="title toc-ignore">Introduction to ParBayesianOptimization</h1>
-<h4 class="author"><em>Samuel Wilson</em></h4>
-<h4 class="date"><em>2019-03-10</em></h4>
+<h4 class="author">Samuel Wilson</h4>
+<h4 class="date">2019-07-30</h4>
 
 
 
@@ -378,25 +404,28 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>The console informs us that the process initialized by running <code>scoringFunction</code> 10 times. It then fit a Gaussian process to the parameter-score pairs, found the global optimum of the acquisition function, and ran <code>scoringFunction</code> again. This process continued until we had 12 parameter-score pairs. You can interrogate the <code>ScoreResult</code> object to see the results:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">ScoreResult<span class="op">$</span>ScoreDT</a>
 <a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt;     Iteration max_depth min_child_weight subsample Elapsed     Score nrounds</span></a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt;  1:         0         7         95.69474 0.4768496    0.55 0.9788650      25</span></a>
-<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt;  2:         0         8         36.98377 0.9208947    0.18 0.9932543       1</span></a>
-<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt;  3:         0        10          3.32332 0.8440490    0.22 0.9984580       1</span></a>
-<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt;  4:         0         7         87.42814 0.9824556    0.16 0.9779723       1</span></a>
-<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt;  5:         0         9         46.63232 0.5914040    0.26 0.9847800       6</span></a>
-<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt;  6:         0         4         58.12424 0.6309099    0.14 0.9779723       1</span></a>
-<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt;  7:         0         6         18.80205 0.3389030    0.59 0.9954537      23</span></a>
-<a class="sourceLine" id="cb5-10" title="10"><span class="co">#&gt;  8:         0         4         78.58703 0.7492533    0.13 0.9779723       1</span></a>
-<a class="sourceLine" id="cb5-11" title="11"><span class="co">#&gt;  9:         0         3         62.37548 0.4322617    0.21 0.9778280       5</span></a>
-<a class="sourceLine" id="cb5-12" title="12"><span class="co">#&gt; 10:         0         3         20.89918 0.3136350    0.28 0.9917280      12</span></a>
-<a class="sourceLine" id="cb5-13" title="13"><span class="co">#&gt; 11:         1         9          1.00000 0.9845378    0.22 0.9984757       1</span></a>
-<a class="sourceLine" id="cb5-14" title="14"><span class="co">#&gt; 12:         2         6          1.00000 0.2500000    0.47 0.9999157      11</span></a></code></pre></div>
+<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt;  1:         0         7         95.69474 0.4768496    0.50 0.9791680      15</span></a>
+<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt;  2:         0         8         36.98377 0.9208947    0.42 0.9931087       7</span></a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt;  3:         0        10          3.32332 0.8440490    0.33 0.9984580       2</span></a>
+<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt;  4:         0         7         87.42814 0.9824556    0.17 0.9779723       1</span></a>
+<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt;  5:         0         9         46.63232 0.5914040    0.33 0.9874427      11</span></a>
+<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt;  6:         0         4         58.12424 0.6309099    0.37 0.9798463       9</span></a>
+<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt;  7:         0         6         18.80205 0.3389030    0.62 0.9944067      11</span></a>
+<a class="sourceLine" id="cb5-10" title="10"><span class="co">#&gt;  8:         0         4         78.58703 0.7492533    0.20 0.9779723       1</span></a>
+<a class="sourceLine" id="cb5-11" title="11"><span class="co">#&gt;  9:         0         3         62.37548 0.4322617    0.17 0.9756543       1</span></a>
+<a class="sourceLine" id="cb5-12" title="12"><span class="co">#&gt; 10:         0         3         20.89918 0.3136350    0.49 0.9922197      12</span></a>
+<a class="sourceLine" id="cb5-13" title="13"><span class="co">#&gt; 11:         1         7          1.00000 0.9408459    0.30 0.9984757       1</span></a>
+<a class="sourceLine" id="cb5-14" title="14"><span class="co">#&gt; 12:         2         9          1.00000 0.8920553    0.32 0.9984757       1</span></a></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">ScoreResult<span class="op">$</span>BestPars</a>
 <a class="sourceLine" id="cb6-2" title="2"><span class="co">#&gt;    Iteration max_depth min_child_weight subsample     Score nrounds elapsedSecs</span></a>
-<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; 1:         0        10          3.32332 0.8440490 0.9984580       1      4 secs</span></a>
-<a class="sourceLine" id="cb6-4" title="4"><span class="co">#&gt; 2:         1         9          1.00000 0.9845378 0.9984757       1     11 secs</span></a>
-<a class="sourceLine" id="cb6-5" title="5"><span class="co">#&gt; 3:         2         6          1.00000 0.2500000 0.9999157      11     22 secs</span></a></code></pre></div>
+<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; 1:         0        10          3.32332 0.8440490 0.9984580       2      5 secs</span></a>
+<a class="sourceLine" id="cb6-4" title="4"><span class="co">#&gt; 2:         1         7          1.00000 0.9408459 0.9984757       1     12 secs</span></a>
+<a class="sourceLine" id="cb6-5" title="5"><span class="co">#&gt; 3:         2         7          1.00000 0.9408459 0.9984757       1     23 secs</span></a></code></pre></div>
 </div>
 
+
+
+<!-- code folding -->
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

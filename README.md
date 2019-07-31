@@ -3,7 +3,8 @@
 
 [![Build
 Status](https://api.travis-ci.org/AnotherSamWilson/ParBayesianOptimization.svg)](https://travis-ci.org/AnotherSamWilson/ParBayesianOptimization)
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/ParBayesianOptimization)](http://cran.r-project.org/web/packages/ParBayesianOptimization)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/ParBayesianOptimization)](https://CRAN.R-project.org/package=ParBayesianOptimization)
+[![CRAN\_Downloads](https://cranlogs.r-pkg.org/badges/ParBayesianOptimization)](https://CRAN.R-project.org/package=ParBayesianOptimization)
 
 # ParBayesianOptimization
 
@@ -70,31 +71,45 @@ do we go about determining the best number of trees to try next? As it
 turns out, Gaussian processes can give us a very good definition for our
 prior distribution. Fitting a Gaussian process to the data above
 (indexed by our hyperparameter), we can see the expected value of Score
-accross our parameter bounds, as well as the uncertainty bands:
+across our parameter bounds, as well as the uncertainty
+bands:
 
-![](vignettes/GPround1.png)<!-- -->
+<center>
+
+<img src="vignettes/GPround1.png" width="648px" style="display: block; margin: auto;" />
+
+</center>
 
 Before we can select our next candidate parameter to run the scoring
 function on, we need to determine how we define a “good” parameter
 inside this prior distribution. This is done by maximizing different
-functions within the Gaussian process. There are several functions to
-choose from:
-
-  - Upper Confidence Bound (ucb)
-  - Probability Of Improvement (poi)
-  - Expected Improvement (ei)
-  - Expected Improvement Per Second (eips)
+utility functions within the Gaussian process. There are several
+functions to choose from:
 
 Our expected improvement in the graph above is maximized at \~2180. If
 we run our process with the new `Trees in Forest = 2180`, we can update
 our Gaussian process for a new prediction about which would be best to
-sample next:
+sample
+next:
 
-![](vignettes/GPround2.png)<!-- -->
+<center>
+
+<img src="vignettes/GPround2.png" width="648px" style="display: block; margin: auto;" />
+
+</center>
 
 As you can see, our updated gaussian process has a maximum expected
 improvement at \~ `Trees in Forest = 1250`. We can continue this process
 until we are confident that we have selected the best parameter set.
+
+The utility functions that are maximized in this package are defined as
+follows:
+
+<center>
+
+<img src="vignettes/UtilityFunctions.png" style="display: block; margin: auto;" />
+
+</center>
 
 An advanced feature of ParBayesianOptimization, which you can read about
 in the vignette advancedFeatures, describes how to use the
@@ -130,6 +145,8 @@ optimal number of rounds determined by the `xgb.cv`:
 
 ``` r
 scoringFunction <- function(max_depth, min_child_weight, subsample) {
+  
+  set.seed(3)
 
   dtrain <- xgb.DMatrix(agaricus.train$data,label = agaricus.train$label)
   
@@ -187,9 +204,9 @@ tNoPar <- system.time(
   ScoreResult <- BayesianOptimization(
       FUN = scoringFunction
     , bounds = bounds
-    , initPoints = 8
+    , initPoints = 4
     , bulkNew = 1
-    , nIters = 10
+    , nIters = 6
     , kern = kern
     , acq = acq
     , kappa = 2.576
@@ -197,7 +214,7 @@ tNoPar <- system.time(
     , parallel = FALSE)
 )
 #> 
-#> Running initial scoring function 8 times in 1 thread(s).
+#> Running initial scoring function 4 times in 1 thread(s).
 #> 
 #> Starting round number 1
 #>   1) Fitting Gaussian process...
@@ -211,33 +228,30 @@ tNoPar <- system.time(
 ```
 
 The console informs us that the process initialized by running
-`scoringFunction` 8 times. It then fit a Gaussian process to the
+`scoringFunction` 4 times. It then fit a Gaussian process to the
 parameter-score pairs, found the global optimum of the acquisition
 function, and ran `scoringFunction` again. This process continued until
 we had 10 parameter-score pairs. You can interrogate the `ScoreResult`
-object to see the results:
+object to see the results. As you can see, the process found better
+parameters after each iteration:
 
 ``` r
 ScoreResult$ScoreDT
-#>     Iteration max_depth min_child_weight subsample Elapsed     Score nrounds
-#>  1:         0         9               34 0.3296843    0.14 0.9779723       1
-#>  2:         0         4               68 0.3928681    0.23 0.9753210       8
-#>  3:         0         7               96 0.5359957    0.30 0.9770130      12
-#>  4:         0         9                7 0.4903703    0.84 0.9990490      32
-#>  5:         0         6               20 0.7854638    0.35 0.9966280       7
-#>  6:         0         4               47 0.6600376    0.32 0.9910997      11
-#>  7:         0         6               84 0.9909790    0.17 0.9796973       1
-#>  8:         0         2               56 0.8460362    0.17 0.9857990       5
-#>  9:         1         9                1 0.6513712    0.31 0.9986653       7
-#> 10:         2         8                1 0.5432635    0.35 0.9986643       8
+#>    Iteration max_depth min_child_weight subsample Elapsed     Score nrounds
+#> 1:         0         4               70 0.7666946    0.19 0.9779723       1
+#> 2:         0         8               16 0.8835947    0.67 0.9981337      17
+#> 3:         0         6               48 0.3199902    0.31 0.9781580       7
+#> 4:         0         2               89 0.4694295    0.24 0.9686220       5
+#> 5:         1        10                1 1.0000000    0.28 0.9984757       1
+#> 6:         2         8                1 0.9641125    0.31 0.9984757       1
 ```
 
 ``` r
 ScoreResult$BestPars
-#>    Iteration max_depth min_child_weight subsample    Score nrounds elapsedSecs
-#> 1:         0         9                7 0.4903703 0.999049      32      3 secs
-#> 2:         1         9                7 0.4903703 0.999049      32     13 secs
-#> 3:         2         9                7 0.4903703 0.999049      32     23 secs
+#>    Iteration max_depth min_child_weight subsample     Score nrounds elapsedSecs
+#> 1:         0         8               16 0.8835947 0.9981337      17      2 secs
+#> 2:         1        10                1 1.0000000 0.9984757       1      9 secs
+#> 3:         2        10                1 1.0000000 0.9984757       1     18 secs
 ```
 
 ## Running In Parallel
@@ -289,8 +303,8 @@ cores in parallel:
 ``` r
 tWithPar
 #>    user  system elapsed 
-#>    1.02    0.14    5.72
+#>    0.98    0.00    7.36
 tNoPar
 #>    user  system elapsed 
-#>   23.99    2.87   23.06
+#>   19.28    1.69   17.59
 ```
