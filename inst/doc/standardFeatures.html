@@ -13,7 +13,7 @@
 
 <meta name="author" content="Samuel Wilson" />
 
-<meta name="date" content="2019-07-30" />
+<meta name="date" content="2019-10-21" />
 
 <title>Introduction to ParBayesianOptimization</title>
 
@@ -304,7 +304,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Introduction to ParBayesianOptimization</h1>
 <h4 class="author">Samuel Wilson</h4>
-<h4 class="date">2019-07-30</h4>
+<h4 class="date">2019-10-21</h4>
 
 
 
@@ -341,86 +341,65 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb2-2" title="2"></a>
 <a class="sourceLine" id="cb2-3" title="3">  dtrain &lt;-<span class="st"> </span><span class="kw">xgb.DMatrix</span>(agaricus.train<span class="op">$</span>data,<span class="dt">label =</span> agaricus.train<span class="op">$</span>label)</a>
 <a class="sourceLine" id="cb2-4" title="4">  </a>
-<a class="sourceLine" id="cb2-5" title="5">  Pars &lt;-<span class="st"> </span><span class="kw">list</span>( <span class="dt">booster =</span> <span class="st">&quot;gbtree&quot;</span></a>
-<a class="sourceLine" id="cb2-6" title="6">              , <span class="dt">eta =</span> <span class="fl">0.01</span></a>
-<a class="sourceLine" id="cb2-7" title="7">              , <span class="dt">max_depth =</span> max_depth</a>
-<a class="sourceLine" id="cb2-8" title="8">              , <span class="dt">min_child_weight =</span> min_child_weight</a>
-<a class="sourceLine" id="cb2-9" title="9">              , <span class="dt">subsample =</span> subsample</a>
-<a class="sourceLine" id="cb2-10" title="10">              , <span class="dt">objective =</span> <span class="st">&quot;binary:logistic&quot;</span></a>
-<a class="sourceLine" id="cb2-11" title="11">              , <span class="dt">eval_metric =</span> <span class="st">&quot;auc&quot;</span>)</a>
-<a class="sourceLine" id="cb2-12" title="12"></a>
-<a class="sourceLine" id="cb2-13" title="13">  xgbcv &lt;-<span class="st"> </span><span class="kw">xgb.cv</span>(<span class="dt">params =</span> Pars</a>
-<a class="sourceLine" id="cb2-14" title="14">                , <span class="dt">data =</span> dtrain</a>
-<a class="sourceLine" id="cb2-15" title="15">                , <span class="dt">nround =</span> <span class="dv">100</span></a>
-<a class="sourceLine" id="cb2-16" title="16">                , <span class="dt">folds =</span> Folds</a>
-<a class="sourceLine" id="cb2-17" title="17">                , <span class="dt">prediction =</span> <span class="ot">TRUE</span></a>
-<a class="sourceLine" id="cb2-18" title="18">                , <span class="dt">showsd =</span> <span class="ot">TRUE</span></a>
-<a class="sourceLine" id="cb2-19" title="19">                , <span class="dt">early_stopping_rounds =</span> <span class="dv">5</span></a>
-<a class="sourceLine" id="cb2-20" title="20">                , <span class="dt">maximize =</span> <span class="ot">TRUE</span></a>
-<a class="sourceLine" id="cb2-21" title="21">                , <span class="dt">verbose =</span> <span class="dv">0</span>)</a>
-<a class="sourceLine" id="cb2-22" title="22"></a>
-<a class="sourceLine" id="cb2-23" title="23">  <span class="kw">return</span>(<span class="kw">list</span>( <span class="dt">Score =</span> <span class="kw">max</span>(xgbcv<span class="op">$</span>evaluation_log<span class="op">$</span>test_auc_mean)</a>
-<a class="sourceLine" id="cb2-24" title="24">             , <span class="dt">nrounds =</span> xgbcv<span class="op">$</span>best_iteration</a>
-<a class="sourceLine" id="cb2-25" title="25">             )</a>
-<a class="sourceLine" id="cb2-26" title="26">         )</a>
-<a class="sourceLine" id="cb2-27" title="27">}</a></code></pre></div>
-<p>Some other objects we need to define are the bounds, GP kernel and acquisition function.</p>
+<a class="sourceLine" id="cb2-5" title="5">  Pars &lt;-<span class="st"> </span><span class="kw">list</span>( </a>
+<a class="sourceLine" id="cb2-6" title="6">      <span class="dt">booster =</span> <span class="st">&quot;gbtree&quot;</span></a>
+<a class="sourceLine" id="cb2-7" title="7">    , <span class="dt">eta =</span> <span class="fl">0.01</span></a>
+<a class="sourceLine" id="cb2-8" title="8">    , <span class="dt">max_depth =</span> max_depth</a>
+<a class="sourceLine" id="cb2-9" title="9">    , <span class="dt">min_child_weight =</span> min_child_weight</a>
+<a class="sourceLine" id="cb2-10" title="10">    , <span class="dt">subsample =</span> subsample</a>
+<a class="sourceLine" id="cb2-11" title="11">    , <span class="dt">objective =</span> <span class="st">&quot;binary:logistic&quot;</span></a>
+<a class="sourceLine" id="cb2-12" title="12">    , <span class="dt">eval_metric =</span> <span class="st">&quot;auc&quot;</span></a>
+<a class="sourceLine" id="cb2-13" title="13">  )</a>
+<a class="sourceLine" id="cb2-14" title="14"></a>
+<a class="sourceLine" id="cb2-15" title="15">  xgbcv &lt;-<span class="st"> </span><span class="kw">xgb.cv</span>(</a>
+<a class="sourceLine" id="cb2-16" title="16">      <span class="dt">params =</span> Pars</a>
+<a class="sourceLine" id="cb2-17" title="17">    , <span class="dt">data =</span> dtrain</a>
+<a class="sourceLine" id="cb2-18" title="18">    , <span class="dt">nround =</span> <span class="dv">100</span></a>
+<a class="sourceLine" id="cb2-19" title="19">    , <span class="dt">folds =</span> Folds</a>
+<a class="sourceLine" id="cb2-20" title="20">    , <span class="dt">prediction =</span> <span class="ot">TRUE</span></a>
+<a class="sourceLine" id="cb2-21" title="21">    , <span class="dt">showsd =</span> <span class="ot">TRUE</span></a>
+<a class="sourceLine" id="cb2-22" title="22">    , <span class="dt">early_stopping_rounds =</span> <span class="dv">5</span></a>
+<a class="sourceLine" id="cb2-23" title="23">    , <span class="dt">maximize =</span> <span class="ot">TRUE</span></a>
+<a class="sourceLine" id="cb2-24" title="24">            , <span class="dt">verbose =</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb2-25" title="25"></a>
+<a class="sourceLine" id="cb2-26" title="26">  <span class="kw">return</span>(<span class="kw">list</span>( <span class="dt">Score =</span> <span class="kw">max</span>(xgbcv<span class="op">$</span>evaluation_log<span class="op">$</span>test_auc_mean)</a>
+<a class="sourceLine" id="cb2-27" title="27">             , <span class="dt">nrounds =</span> xgbcv<span class="op">$</span>best_iteration</a>
+<a class="sourceLine" id="cb2-28" title="28">             )</a>
+<a class="sourceLine" id="cb2-29" title="29">         )</a>
+<a class="sourceLine" id="cb2-30" title="30">}</a></code></pre></div>
+<p>Some other objects we need to define are the bounds, GP kernel and acquisition function. In this example, the kernel and acquisition function are left as the default.</p>
 <ul>
 <li>The <code>bounds</code> will tell our process its search space.</li>
 <li>The kernel is passed to the <code>GauPro</code> function <code>GauPro_kernel_model</code> and defines the covariance function.</li>
 <li>The acquisition function defines the utility we get from using a certain parameter set.</li>
 </ul>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">bounds &lt;-<span class="st"> </span><span class="kw">list</span>( <span class="dt">max_depth =</span> <span class="kw">c</span>(2L, 10L)</a>
-<a class="sourceLine" id="cb3-2" title="2">              , <span class="dt">min_child_weight =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">100</span>)</a>
-<a class="sourceLine" id="cb3-3" title="3">              , <span class="dt">subsample =</span> <span class="kw">c</span>(<span class="fl">0.25</span>, <span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb3-4" title="4"></a>
-<a class="sourceLine" id="cb3-5" title="5">kern &lt;-<span class="st"> &quot;Matern52&quot;</span></a>
-<a class="sourceLine" id="cb3-6" title="6"></a>
-<a class="sourceLine" id="cb3-7" title="7">acq &lt;-<span class="st"> &quot;ei&quot;</span></a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">bounds &lt;-<span class="st"> </span><span class="kw">list</span>( </a>
+<a class="sourceLine" id="cb3-2" title="2">    <span class="dt">max_depth =</span> <span class="kw">c</span>(2L, 10L)</a>
+<a class="sourceLine" id="cb3-3" title="3">  , <span class="dt">min_child_weight =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">25</span>)</a>
+<a class="sourceLine" id="cb3-4" title="4">  , <span class="dt">subsample =</span> <span class="kw">c</span>(<span class="fl">0.25</span>, <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb3-5" title="5">)</a></code></pre></div>
 <p>We are now ready to put this all into the <code>BayesianOptimization</code> function.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">ScoreResult &lt;-<span class="st"> </span><span class="kw">BayesianOptimization</span>(<span class="dt">FUN =</span> scoringFunction</a>
-<a class="sourceLine" id="cb4-2" title="2">                                  , <span class="dt">bounds =</span> bounds</a>
-<a class="sourceLine" id="cb4-3" title="3">                                  , <span class="dt">initPoints =</span> <span class="dv">10</span></a>
-<a class="sourceLine" id="cb4-4" title="4">                                  , <span class="dt">bulkNew =</span> <span class="dv">1</span></a>
-<a class="sourceLine" id="cb4-5" title="5">                                  , <span class="dt">nIters =</span> <span class="dv">12</span></a>
-<a class="sourceLine" id="cb4-6" title="6">                                  , <span class="dt">kern =</span> kern</a>
-<a class="sourceLine" id="cb4-7" title="7">                                  , <span class="dt">acq =</span> acq</a>
-<a class="sourceLine" id="cb4-8" title="8">                                  , <span class="dt">kappa =</span> <span class="fl">2.576</span></a>
-<a class="sourceLine" id="cb4-9" title="9">                                  , <span class="dt">verbose =</span> <span class="dv">1</span></a>
-<a class="sourceLine" id="cb4-10" title="10">                                  , <span class="dt">parallel =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb4-11" title="11"><span class="co">#&gt; parallel back end is registered, but parallel is set to false. Process will not be run in parallel.</span></a>
-<a class="sourceLine" id="cb4-12" title="12"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb4-13" title="13"><span class="co">#&gt; Running initial scoring function 10 times in 2 thread(s).</span></a>
-<a class="sourceLine" id="cb4-14" title="14"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb4-15" title="15"><span class="co">#&gt; Starting round number 1</span></a>
-<a class="sourceLine" id="cb4-16" title="16"><span class="co">#&gt;   1) Fitting Gaussian process...</span></a>
-<a class="sourceLine" id="cb4-17" title="17"><span class="co">#&gt;   2) Running local optimum search...</span></a>
-<a class="sourceLine" id="cb4-18" title="18"><span class="co">#&gt;   3) Running scoring function 1 times in 2 thread(s)...</span></a>
-<a class="sourceLine" id="cb4-19" title="19"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb4-20" title="20"><span class="co">#&gt; Starting round number 2</span></a>
-<a class="sourceLine" id="cb4-21" title="21"><span class="co">#&gt;   1) Fitting Gaussian process...</span></a>
-<a class="sourceLine" id="cb4-22" title="22"><span class="co">#&gt;   2) Running local optimum search...</span></a>
-<a class="sourceLine" id="cb4-23" title="23"><span class="co">#&gt;   3) Running scoring function 1 times in 2 thread(s)...</span></a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw">set.seed</span>(<span class="dv">1234</span>)</a>
+<a class="sourceLine" id="cb4-2" title="2">ScoreResult &lt;-<span class="st"> </span><span class="kw">BayesianOptimization</span>(</a>
+<a class="sourceLine" id="cb4-3" title="3">    <span class="dt">FUN =</span> scoringFunction</a>
+<a class="sourceLine" id="cb4-4" title="4">  , <span class="dt">bounds =</span> bounds</a>
+<a class="sourceLine" id="cb4-5" title="5">  , <span class="dt">initPoints =</span> <span class="dv">4</span></a>
+<a class="sourceLine" id="cb4-6" title="6">  , <span class="dt">nIters =</span> <span class="dv">6</span></a>
+<a class="sourceLine" id="cb4-7" title="7">)</a></code></pre></div>
 <p>The console informs us that the process initialized by running <code>scoringFunction</code> 10 times. It then fit a Gaussian process to the parameter-score pairs, found the global optimum of the acquisition function, and ran <code>scoringFunction</code> again. This process continued until we had 12 parameter-score pairs. You can interrogate the <code>ScoreResult</code> object to see the results:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">ScoreResult<span class="op">$</span>ScoreDT</a>
-<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt;     Iteration max_depth min_child_weight subsample Elapsed     Score nrounds</span></a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt;  1:         0         7         95.69474 0.4768496    0.50 0.9791680      15</span></a>
-<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt;  2:         0         8         36.98377 0.9208947    0.42 0.9931087       7</span></a>
-<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt;  3:         0        10          3.32332 0.8440490    0.33 0.9984580       2</span></a>
-<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt;  4:         0         7         87.42814 0.9824556    0.17 0.9779723       1</span></a>
-<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt;  5:         0         9         46.63232 0.5914040    0.33 0.9874427      11</span></a>
-<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt;  6:         0         4         58.12424 0.6309099    0.37 0.9798463       9</span></a>
-<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt;  7:         0         6         18.80205 0.3389030    0.62 0.9944067      11</span></a>
-<a class="sourceLine" id="cb5-10" title="10"><span class="co">#&gt;  8:         0         4         78.58703 0.7492533    0.20 0.9779723       1</span></a>
-<a class="sourceLine" id="cb5-11" title="11"><span class="co">#&gt;  9:         0         3         62.37548 0.4322617    0.17 0.9756543       1</span></a>
-<a class="sourceLine" id="cb5-12" title="12"><span class="co">#&gt; 10:         0         3         20.89918 0.3136350    0.49 0.9922197      12</span></a>
-<a class="sourceLine" id="cb5-13" title="13"><span class="co">#&gt; 11:         1         7          1.00000 0.9408459    0.30 0.9984757       1</span></a>
-<a class="sourceLine" id="cb5-14" title="14"><span class="co">#&gt; 12:         2         9          1.00000 0.8920553    0.32 0.9984757       1</span></a></code></pre></div>
+<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt;    Iteration max_depth min_child_weight subsample gpUtility acqOptimum Elapsed     Score nrounds</span></a>
+<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt; 1:         0         9         5.863591 0.2585819  1.000000      FALSE    0.41 0.9984373      11</span></a>
+<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; 2:         0         4        10.154185 0.5230172  1.000000      FALSE    0.27 0.9977907       7</span></a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt; 3:         0         6        24.487949 0.8622225  1.000000      FALSE    1.39 0.9988230      52</span></a>
+<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt; 4:         0         2        17.988070 0.6821260  1.000000      FALSE    0.22 0.9876197      10</span></a>
+<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt; 5:         1         3         2.772369 0.9801339  1.808541       TRUE    0.13 0.9871203       1</span></a>
+<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt; 6:         2         5        24.102201 0.9792876  1.841824       TRUE    2.09 0.9990130      91</span></a></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">ScoreResult<span class="op">$</span>BestPars</a>
-<a class="sourceLine" id="cb6-2" title="2"><span class="co">#&gt;    Iteration max_depth min_child_weight subsample     Score nrounds elapsedSecs</span></a>
-<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; 1:         0        10          3.32332 0.8440490 0.9984580       2      5 secs</span></a>
-<a class="sourceLine" id="cb6-4" title="4"><span class="co">#&gt; 2:         1         7          1.00000 0.9408459 0.9984757       1     12 secs</span></a>
-<a class="sourceLine" id="cb6-5" title="5"><span class="co">#&gt; 3:         2         7          1.00000 0.9408459 0.9984757       1     23 secs</span></a></code></pre></div>
+<a class="sourceLine" id="cb6-2" title="2"><span class="co">#&gt;    Iteration max_depth min_child_weight subsample    Score nrounds elapsedSecs</span></a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; 1:         0         6         24.48795 0.8622225 0.998823      52      3 secs</span></a>
+<a class="sourceLine" id="cb6-4" title="4"><span class="co">#&gt; 2:         1         6         24.48795 0.8622225 0.998823      52     10 secs</span></a>
+<a class="sourceLine" id="cb6-5" title="5"><span class="co">#&gt; 3:         2         5         24.10220 0.9792876 0.999013      91     23 secs</span></a></code></pre></div>
 </div>
 
 
