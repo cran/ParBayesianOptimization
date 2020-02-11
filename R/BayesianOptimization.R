@@ -1,7 +1,6 @@
-#' @title Bayesian Optimization
+#' Bayesian Optimization with Gaussian Processes
 #'
-#' @description
-#' Flexible Bayesian optimization of model hyperparameters.
+#' This function is depreciated. Please use \code{bayesOpt} instead.
 #'
 #' @param FUN the function to be maximized. This function should return a
 #'   named list with at least 1 component. The first component must be named
@@ -83,10 +82,8 @@
 #'   If \code{NULL}, only the global optimum will be used as a candidate
 #'   parameter set. If 0.5, only local optimums with 50 percent of the global
 #'   optimum will be used.
-#' @param noiseAdd specifies how much noise to add to acquisition optimums
-#'   to obtain new parameter sets, if needed. New random draws are pulled
-#'   from a shape(4,4) beta distribution centered at the optimal candidate
-#'   parameter set with a range equal to \code{noiseAdd*(Upper Bound - Lower Bound)}
+#' @param noiseAdd Depreciated. Noise is added in increasing amounts until
+#' unique parameter sets are found.
 #' @param plotProgress Should the progress of the Bayesian optimization be
 #'   printed? Top graph shows the score(s) obtained at each iteration.
 #'   The bottom graph shows the optimal value of the acquisition function
@@ -110,86 +107,6 @@
 #' evaluate that parameter set.}
 #' \item{BestPars}{The best parameter set at each iteration}
 #' @references Jasper Snoek, Hugo Larochelle, Ryan P. Adams (2012) \emph{Practical Bayesian Optimization of Machine Learning Algorithms}
-#' @examples
-#' # Example 1 - Optimization of a continuous single parameter function
-#' scoringFunction <- function(x) {
-#'   a <- exp(-(2-x)^2)*1.5
-#'   b <- exp(-(4-x)^2)*2
-#'   c <- exp(-(6-x)^2)*1
-#'   return(list(Score = a+b+c))
-#' }
-#'
-#' bounds <- list(x = c(0,8))
-#'
-#' Results <- BayesianOptimization(
-#'     FUN = scoringFunction
-#'   , bounds = bounds
-#'   , initPoints = 5
-#'   , nIters = 8
-#'   , gsPoints = 10
-#' )
-#'
-#' \dontrun{
-#' # Example 2 - Hyperparameter Tuning in xgboost
-#' library("xgboost")
-#'
-#' data(agaricus.train, package = "xgboost")
-#'
-#' Folds <- list( Fold1 = as.integer(seq(1,nrow(agaricus.train$data),by = 3))
-#'              , Fold2 = as.integer(seq(2,nrow(agaricus.train$data),by = 3))
-#'              , Fold3 = as.integer(seq(3,nrow(agaricus.train$data),by = 3)))
-#'
-#' scoringFunction <- function(max_depth, min_child_weight, subsample) {
-#'
-#'   dtrain <- xgb.DMatrix(agaricus.train$data,label = agaricus.train$label)
-#'
-#'   Pars <- list(
-#'       booster = "gbtree"
-#'     , eta = 0.01
-#'     , max_depth = max_depth
-#'     , min_child_weight = min_child_weight
-#'     , subsample = subsample
-#'     , objective = "binary:logistic"
-#'     , eval_metric = "auc"
-#'   )
-#'
-#'   xgbcv <- xgb.cv(
-#'        params = Pars
-#'      , data = dtrain
-#'      , nround = 100
-#'      , folds = Folds
-#'      , prediction = TRUE
-#'      , showsd = TRUE
-#'      , early_stopping_rounds = 5
-#'      , maximize = TRUE
-#'      , verbose = 0
-#'   )
-#'
-#'   return(list( Score = max(xgbcv$evaluation_log$test_auc_mean)
-#'              , nrounds = xgbcv$best_iteration
-#'   )
-#'   )
-#' }
-#'
-#' bounds <- list(
-#'     max_depth = c(2L, 10L)
-#'   , min_child_weight = c(1, 100)
-#'   , subsample = c(0.25, 1)
-#' )
-#'
-#' ScoreResult <- BayesianOptimization(
-#'     FUN = scoringFunction
-#'   , bounds = bounds
-#'   , initPoints = 5
-#'   , bulkNew = 1
-#'   , nIters = 7
-#'   , kern = "Matern52"
-#'   , acq = "ei"
-#'   , verbose = 1
-#'   , parallel = FALSE
-#'   , gsPoints = 50
-#' )
-#' }
 #' @importFrom data.table data.table setDT setcolorder := as.data.table copy .I setnames is.data.table
 #' @importFrom utils head
 #' @importFrom GauPro GauPro_kernel_model Matern52 Matern32 Exponential Gaussian
@@ -197,7 +114,7 @@
 #' @import plotly
 #' @export
 BayesianOptimization <- function(
-  FUN
+    FUN
   , bounds
   , saveIntermediate = NULL
   , leftOff = NULL
@@ -222,6 +139,16 @@ BayesianOptimization <- function(
   , plotProgress = TRUE
   , verbose = 1
 ) {
+
+  # See if the user wants to continue:
+  message(
+      "This function (BayesianOptimization) has been depreciated, and will be removed in the next version."
+    , "Its replacement, bayesOpt, is much more intuitive. Continue? [y/n]"
+    )
+  line <- readline()
+  if (tolower(line) != "y") stop("Stopped by user.")
+
+  .Deprecated("bayesOpt")
 
   StartT <- Sys.time()
 
@@ -249,7 +176,7 @@ BayesianOptimization <- function(
 
   # Make bounds data easily accessible
   boundsDT <- data.table(
-    N = names(bounds)
+      N = names(bounds)
     , L = sapply(bounds, function(x) x[1])
     , U = sapply(bounds, function(x) x[2])
     , R = sapply(bounds, function(x) x[2]) - sapply(bounds, function(x) x[1])
@@ -283,12 +210,15 @@ BayesianOptimization <- function(
   if (initPoints > 0 & nrow(initGrid)>0) stop("initGrid and initPoints are specified, choose one.")
   if (initPoints <= 0 & nrow(initGrid)==0 & nrow(leftOff) == 0) stop("neither initGrid or initPoints are specified, choose one or provide leftOff")
   if (parallel & (getDoParWorkers() == 1)) stop("parallel is set to TRUE but no back end is registered.\n")
-  if (!parallel & getDoParWorkers() > 1 & verbose > 0) cat("parallel back end is registered, but parallel is set to false. Process will not be run in parallel.\n")
   if (nrow(initGrid)>0) {
-    if (sum(sapply(boundsDT$N, checkBounds,initGrid, bounds))>0) stop("initGrid not within bounds.")
+    inBounds <- checkBounds(initGrid,bounds)
+    inBounds <- as.logical(apply(inBounds,1,prod))
+    if (any(!inBounds)) stop("initGrid not within bounds.")
   }
   if (nrow(leftOff) > 0){
-    if (sum(sapply(boundsDT$N, checkBounds,leftOff, bounds))>0) stop("leftOff not within bounds.")
+    inBounds <- checkBounds(leftOff,bounds)
+    inBounds <- as.logical(apply(inBounds,1,prod))
+    if (any(!inBounds)) stop("leftOff not within bounds.")
   }
   if (nrow(leftOff)+initialize*(initPoints+nrow(initGrid)) >= nIters) stop("Rows in initial set will be larger than nIters")
   if (verbose > 0 & bulkNew < getDoParWorkers() & parallel) cat("bulkNew is less than the threads registered on the parallel back end - process may not utilize all workers.\n")
@@ -307,15 +237,16 @@ BayesianOptimization <- function(
 
     if (verbose > 0) cat("\nRunning initial scoring function",nrow(InitFeedParams),"times in",Workers,"thread(s).\n")
     sink(file = sinkFile)
-    ScoreDT <- foreach( iter = 1:nrow(InitFeedParams)
-                        , .options.multicore = mco
-                        , .combine = rbind
-                        , .multicombine = TRUE
-                        , .inorder = FALSE
-                        , .errorhandling = 'pass'
-                        , .packages = unique(c('data.table',packages))
-                        , .verbose = FALSE
-                        , .export = export
+    ScoreDT <- foreach(
+        iter = 1:nrow(InitFeedParams)
+      , .options.multicore = mco
+      , .combine = rbind
+      , .multicombine = TRUE
+      , .inorder = FALSE
+      , .errorhandling = 'pass'
+      , .packages = unique(c('data.table',packages))
+      , .verbose = FALSE
+                  , .export = export
     ) %op% {
 
       Params <- InitFeedParams[get("iter"),]
@@ -328,8 +259,9 @@ BayesianOptimization <- function(
 
 
     if (!is.data.table(ScoreDT)) {
-      cat("\nFUN failed to run with error list:\n"); print(ScoreDT)
-      stop("Stopping process.")
+      cat(returnEarly("\nFUN failed to run, returned error:\n<<")); cat(returnEarly(ScoreDT[[1]]))
+      cat(returnEarly(">>\nThis was the first iteration, so no results will be returned.\n"))
+      stop()
     }
 
     ScoreDT[,("gpUtility") := rep(acqBase,nrow(ScoreDT))]
@@ -456,31 +388,48 @@ BayesianOptimization <- function(
       return(RetList)
     }
 
+    # Try to run the scoring function. If not all (but at least 1) new runs fail,
+    # then foreach cannot call rbind correctly, and an error is thrown.
     if (verbose > 0) cat("\n  3) Running scoring function",nrow(fromCluster),"times in",Workers,"thread(s)...\n")
     sink(file = sinkFile)
-    NewResults <- foreach(
-      iter = 1:nrow(fromCluster)
-      , .options.multicore = mco
-      , .combine = rbind
-      , .multicombine = TRUE
-      , .inorder = FALSE
-      , .errorhandling = 'pass'
-      , .packages = packages
-      , .verbose = FALSE
-      , .export = export
-    ) %op% {
+    NewResults <- tryCatch({
+      foreach(
+        iter = 1:nrow(fromCluster)
+        , .options.multicore = mco
+        , .combine = rbind
+        , .multicombine = TRUE
+        , .inorder = FALSE
+        , .errorhandling = 'pass'
+        , .packages = packages
+        , .verbose = FALSE
+        , .export = export
+      ) %op% {
 
-      Params <- fromCluster[get("iter"),boundsDT$N,with=FALSE]
-      Elapsed <- system.time(Result <- do.call(what = FUN, args = as.list(Params)))
-      data.table(fromCluster[get("iter"),], Elapsed = Elapsed[[3]], as.data.table(Result))
+        Params <- fromCluster[get("iter"),boundsDT$N,with=FALSE]
+        Elapsed <- system.time(Result <- do.call(what = FUN, args = as.list(Params)))
+        data.table(fromCluster[get("iter"),], Elapsed = Elapsed[[3]], as.data.table(Result))
 
+      }
     }
+    , error = function(e) {
+        return("exitWithError")
+      }
+    )
     while (sink.number() > 0) sink()
 
-
     if (!is.data.table(NewResults)) {
-      cat("\nFUN failed to run with error list:\n"); print(NewResults)
-      stop("Stopping process.")
+
+      # If the scoring function encountered a mixture of errors and successful runs.
+      if(any(NewResults == "exitWithError")) {
+        cat(returnEarly("\nScoring function resulted in an error that could not be displayed. Stopping process and returning results so far."))
+        return(RetList)
+      }
+
+      # Otherwise, it encountered all errors, and the list can be returned.
+      cat(returnEarly("\nFUN failed to run, returned error:\n<<")); cat(returnEarly(NewResults[[1]]))
+      cat(returnEarly(">>\nStopping process and returning results obtained so far."))
+      return(RetList)
+
     }
 
     Time <- Sys.time()
