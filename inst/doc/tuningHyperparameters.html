@@ -392,23 +392,23 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb4-7" title="7">)</a></code></pre></div>
 <p>The console informs us that the process initialized by running <code>scoringFunction</code> 4 times. It then fit a Gaussian process to the parameter-score pairs, found the global optimum of the acquisition function, and ran <code>scoringFunction</code> again. This process continued until we had 7 parameter-score pairs. You can interrogate the <code>bayesOpt</code> object to see the results:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">optObj<span class="op">$</span>scoreSummary</a>
-<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt;    Epoch Iteration max_depth min_child_weight subsample gpUtility acqOptimum inBounds Elapsed     Score nrounds</span></a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt; 1:     0         1         9         5.863591 0.2585819        NA      FALSE     TRUE    0.39 0.9984373      11</span></a>
-<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; 2:     0         2         4        10.154185 0.5230172        NA      FALSE     TRUE    0.27 0.9977907       7</span></a>
-<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt; 3:     0         3         6        24.487949 0.8622225        NA      FALSE     TRUE    1.34 0.9988230      52</span></a>
-<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt; 4:     0         4         2        17.988070 0.6821260        NA      FALSE     TRUE    0.22 0.9876197      10</span></a>
-<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt; 5:     1         5         7         2.772626 0.7964145 0.8085415       TRUE     TRUE    0.80 0.9986513      25</span></a>
-<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt; 6:     2         6         2         1.000000 0.2500000 0.5243231       TRUE     TRUE    0.34 0.9948417      20</span></a>
-<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt; 7:     3         7        10        12.900975 0.7794899 0.5645827       TRUE     TRUE    0.57 0.9987210      18</span></a></code></pre></div>
+<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt;    Epoch Iteration max_depth min_child_weight subsample gpUtility acqOptimum inBounds Elapsed     Score nrounds errorMessage</span></a>
+<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt; 1:     0         1         9         5.863591 0.2585819        NA      FALSE     TRUE    0.46 0.9984373      11           NA</span></a>
+<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; 2:     0         2         4        10.154185 0.5230172        NA      FALSE     TRUE    0.33 0.9977907       7           NA</span></a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt; 3:     0         3         6        24.487949 0.8622225        NA      FALSE     TRUE    1.39 0.9988230      52           NA</span></a>
+<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt; 4:     0         4         2        17.988070 0.6821260        NA      FALSE     TRUE    0.23 0.9876197      10           NA</span></a>
+<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt; 5:     1         5         2         7.652206 1.0000000 0.8147956       TRUE     TRUE    0.19 0.9871587       8           NA</span></a>
+<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt; 6:     2         6         9         7.992101 0.2843360 0.7111638       TRUE     TRUE    0.31 0.9977847       7           NA</span></a>
+<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt; 7:     3         7         9         1.000000 0.2500000 0.8122421       TRUE     TRUE    0.36 0.9999503       9           NA</span></a></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw">getBestPars</span>(optObj)</a>
 <a class="sourceLine" id="cb6-2" title="2"><span class="co">#&gt; $max_depth</span></a>
-<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; [1] 6</span></a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; [1] 9</span></a>
 <a class="sourceLine" id="cb6-4" title="4"><span class="co">#&gt; </span></a>
 <a class="sourceLine" id="cb6-5" title="5"><span class="co">#&gt; $min_child_weight</span></a>
-<a class="sourceLine" id="cb6-6" title="6"><span class="co">#&gt; [1] 24.48795</span></a>
+<a class="sourceLine" id="cb6-6" title="6"><span class="co">#&gt; [1] 1</span></a>
 <a class="sourceLine" id="cb6-7" title="7"><span class="co">#&gt; </span></a>
 <a class="sourceLine" id="cb6-8" title="8"><span class="co">#&gt; $subsample</span></a>
-<a class="sourceLine" id="cb6-9" title="9"><span class="co">#&gt; [1] 0.8622225</span></a></code></pre></div>
+<a class="sourceLine" id="cb6-9" title="9"><span class="co">#&gt; [1] 0.25</span></a></code></pre></div>
 </div>
 
 

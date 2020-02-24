@@ -13,7 +13,7 @@
 
 <meta name="author" content="Samuel Wilson" />
 
-<meta name="date" content="2020-02-10" />
+<meta name="date" content="2020-02-24" />
 
 <title>Function Maximization</title>
 
@@ -304,7 +304,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Function Maximization</h1>
 <h4 class="author">Samuel Wilson</h4>
-<h4 class="date">2020-02-10</h4>
+<h4 class="date">2020-02-24</h4>
 
 
 
@@ -336,14 +336,14 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>Let’s see how close the algorithm got to the global maximum:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw">getBestPars</span>(optObj)</a>
 <a class="sourceLine" id="cb4-2" title="2"><span class="co">#&gt; $x</span></a>
-<a class="sourceLine" id="cb4-3" title="3"><span class="co">#&gt; [1] 6.440633</span></a></code></pre></div>
+<a class="sourceLine" id="cb4-3" title="3"><span class="co">#&gt; [1] 6.410781</span></a></code></pre></div>
 <p>The process is getting pretty close! We were only about 12% shy of the global optimum:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">simpleFunction</span>(<span class="fl">7.023</span>)<span class="op">/</span><span class="kw">simpleFunction</span>(<span class="kw">getBestPars</span>(optObj)<span class="op">$</span>x)</a>
-<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt; [1] 1.120063</span></a></code></pre></div>
+<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt; [1] 1.132927</span></a></code></pre></div>
 <p>Let’s run the process for a little longer:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">optObj &lt;-<span class="st"> </span><span class="kw">addIterations</span>(optObj,<span class="dt">iters.n=</span><span class="dv">2</span>,<span class="dt">verbose=</span><span class="dv">0</span>)</a>
 <a class="sourceLine" id="cb6-2" title="2"><span class="kw">simpleFunction</span>(<span class="fl">7.023</span>)<span class="op">/</span><span class="kw">simpleFunction</span>(<span class="kw">getBestPars</span>(optObj)<span class="op">$</span>x)</a>
-<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; [1] 1.002453</span></a></code></pre></div>
+<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; [1] 1.000454</span></a></code></pre></div>
 <p>We have now found an <code>x</code> very close to the global optimum.</p>
 </div>
 

@@ -15,40 +15,43 @@
 #'   at each Epoch (optimization step). If running in parallel, good practice
 #'   is to set \code{iters.k} to some multiple of the number of cores you have designated
 #'   for this process. Must belower than, and preferrably some multiple of \code{iters.n}.
+#' @param otherHalting Same as bayesOpt()
 #' @param bounds Same as bayesOpt()
-#' @param kern Same as bayesOpt()
 #' @param acq Same as bayesOpt()
 #' @param kappa Same as bayesOpt()
 #' @param eps Same as bayesOpt()
 #' @param gsPoints Same as bayesOpt()
 #' @param convThresh Same as bayesOpt()
 #' @param acqThresh Same as bayesOpt()
+#' @param errorHandling Same as bayesOpt()
 #' @param saveFile Same as bayesOpt()
 #' @param parallel Same as bayesOpt()
 #' @param plotProgress Same as bayesOpt()
 #' @param verbose Same as bayesOpt()
-#' @importFrom GauPro GauPro_kernel_model Matern52 Matern32 Exponential Gaussian
-#' @importFrom crayon make_style red
+#' @param ... Same as bayesOpt()
 #' @return A \code{bayesOpt} object.
 #' @export
 addIterations <- function(
       optObj
     , iters.n = 1
     , iters.k = 1
+    , otherHalting = list(timeLimit = Inf,minUtility = 0)
     , bounds = optObj$bounds
-    , kern = optObj$optPars$kern
     , acq = optObj$optPars$acq
     , kappa = optObj$optPars$kappa
     , eps = optObj$optPars$eps
     , gsPoints = optObj$optPars$gsPoints
     , convThresh = optObj$optPars$convThresh
     , acqThresh = optObj$optPars$acqThresh
+    , errorHandling = "stop"
     , saveFile = optObj$saveFile
     , parallel = FALSE
-    , plotProgress = TRUE
+    , plotProgress = FALSE
     , verbose = 1
+    , ...
 ) {
 
+  startT <- Sys.time()
   if(class(optObj) != "bayesOpt") stop("optObj must be of class bayesOpt")
 
   # Check the parameters
@@ -56,13 +59,18 @@ addIterations <- function(
       bounds
     , iters.n
     , iters.k
-    , kern
+    , otherHalting
     , acq
     , acqThresh
+    , errorHandling
     , plotProgress
+    , parallel
+    , verbose
   )
 
+  optObj$stopStatus <- "OK"
   optObj <- changeSaveFile(optObj,saveFile)
+  otherHalting <- formatOtherHalting(otherHalting)
 
   # Set up for iterations
   FUN <- optObj$FUN
@@ -73,7 +81,6 @@ addIterations <- function(
   if(parallel) Workers <- getDoParWorkers() else Workers <- 1
   iters.s <- nrow(scoreSummary)
   iters.t <- iters.n + iters.s
-  returnEarly <- crayon::make_style("#FF6200")
 
   # Store information we know about the different acquisition functions:
   # Display name
@@ -112,17 +119,25 @@ addIterations <- function(
 
     Epoch <- Epoch + 1
 
-    if (verbose > 0) cat("\nStarting Epoch",Epoch)
+    if (verbose > 0) cat("\nStarting Epoch",Epoch,"\n")
 
     # How many runs to make this session
     runNew <- pmin(iters.t-nrow(scoreSummary), iters.k)
 
     # Fit GP
-    if (verbose > 0) cat("\n  1) Fitting Gaussian Process...")
-    optObj <- updateGP(optObj,bounds = bounds, verbose = FALSE)
+    if (verbose > 0) cat("  1) Fitting Gaussian Process...\n")
+    optObj <- updateGP(optObj,bounds = bounds, verbose = 0,...)
 
-    # Try gsPoints starting points to find parameter set that optimizes Acq
-    if (verbose > 0) cat("\n  2) Running local optimum search...")
+    # See if updateGP altered the stopStatus.
+    # If so, the km() failed and we need to return optObj
+    if (optObj$stopStatus != "OK") {
+      printStopStatus(optObj,verbose)
+      optObj$elapsedTime <- totalTime(optObj,startT)
+      return(optObj)
+    }
+
+    # Find local optimums of the acquisition function
+    if (verbose > 0) cat("  2) Running local optimum search...")
     tm <- system.time(
       LocalOptims <- getLocalOptimums(
           optObj
@@ -130,8 +145,23 @@ addIterations <- function(
         , verbose=verbose
       )
     )[[3]]
-    if (verbose > 0) cat("       ",tm,"seconds")
+    if (verbose > 0) cat("       ",tm,"seconds\n")
 
+    # Should we continue?
+    if (otherHalting$minUtility > max(LocalOptims$gpUtility)) {
+      optObj$stopStatus <- makeStopEarlyMessage(paste0("Returning Results. Could not meet minimum required (",otherHalting$minUtility,") utility."))
+      printStopStatus(optObj,verbose)
+      optObj$elapsedTime <- totalTime(optObj,startT)
+      return(optObj)
+    } else if (otherHalting$timeLimit < totalTime(optObj,startT)) {
+      optObj$stopStatus <- makeStopEarlyMessage(paste0("Time Limit - ",otherHalting$timeLimit," seconds."))
+      printStopStatus(optObj,verbose)
+      optObj$elapsedTime <- totalTime(optObj,startT)
+      return(optObj)
+    }
+
+    # Filter out local optimums to our specifications
+    # Obtain new candidates if we don't have enough
     nextPars <- getNextParameters(
         LocalOptims
       , boundsDT
@@ -146,64 +176,51 @@ addIterations <- function(
       , timeGP = optObj$GauProList$timeGP
     )
     if(any(class(nextPars) == "stopEarlyMsg")) {
-      cat(returnEarly(nextPars))
-      optObj$stopStatus <- paste0("Error in getNextParameters: ",nextPars)
+      optObj$stopStatus <- nextPars
+      printStopStatus(optObj,verbose)
+      optObj$elapsedTime <- totalTime(optObj,startT)
       return(optObj)
     }
 
     # Try to run the scoring function. If not all (but at least 1) new runs fail,
     # then foreach cannot call rbind correctly, and an error is thrown.
-    if (verbose > 0) cat("\n  3) Running FUN",nrow(nextPars),"times in",Workers,"thread(s)...")
+    if (verbose > 0) cat("  3) Running FUN",nrow(nextPars),"times in",Workers,"thread(s)...")
     sink(file = sinkFile)
     tm <- system.time(
-      NewResults <- tryCatch(
-        {
-          foreach(
-            iter = 1:nrow(nextPars)
-            , .options.multicore = list(preschedule=FALSE)
-            , .combine = rbind
-            , .multicombine = TRUE
-            , .inorder = FALSE
-            , .errorhandling = 'pass'
-            #, .packages = packages
-            , .verbose = FALSE
-            #, .export = export
-          ) %op% {
+      NewResults <- foreach(
+        iter = 1:nrow(nextPars)
+        , .options.multicore = list(preschedule=FALSE)
+        , .combine = rbindFE
+        , .multicombine = TRUE
+        , .inorder = FALSE
+        , .errorhandling = 'stop'
+        , .verbose = FALSE
+      ) %op% {
 
-            Params <- nextPars[get("iter"),boundsDT$N,with=FALSE]
-            Elapsed <- system.time(Result <- do.call(what = FUN, args = as.list(Params)))
-            return(data.table(nextPars[get("iter"),], Elapsed = Elapsed[[3]], as.data.table(Result)))
+        Params <- nextPars[get("iter"),boundsDT$N,with=FALSE]
+        Elapsed <- system.time(
+          Result <- tryCatch(
+            {
+              do.call(what = FUN, args = as.list(Params))
+            }
+            , error = function(e) e
+          )
+        )
 
-          }
+        if (!any(class(Result) %in% c("simpleError","error","condition"))) {
+          return(data.table(nextPars[get("iter"),], Elapsed = Elapsed[[3]], as.data.table(Result),errorMessage = NA))
+        } else {
+          return(data.table(nextPars[get("iter"),], Elapsed = Elapsed[[3]],Score = NA, errorMessage = conditionMessage(Result)))
         }
-        , error = function(e) e
-      )
+
+      }
     )[[3]]
     while (sink.number() > 0) sink()
 
+    # Leaves room for flexability in the future.
+    optObj$stopStatus <- getEarlyStoppingErrorStatus(NewResults,scoreSummary,errorHandling,verbose)
+
     if (verbose > 0) cat(" ",tm,"seconds\n")
-
-    # Check for errors.
-    if (!is.data.table(NewResults)) {
-
-      if (class(NewResults) %in% c("simpleError","Error","condition")) {
-        er <- conditionMessage(NewResults)
-        if (verbose > 0) {
-          cat(returnEarly("\nAn error occured in FUN:",er))
-          cat(returnEarly(" If this error is about inconsist column counts, it may mean that FUN failed in at least 1, but not all runs."))
-          cat(returnEarly(" If you can verify that this is not an error in FUN, please submit an issue to: https://github.com/AnotherSamWilson/ParBayesianOptimization/issues."))
-          cat(returnEarly(" Returning results so far."))
-        }
-        optObj$stopStatus <- paste0("Error in FUN: ",er)
-        return(optObj)
-      } else if(class(NewResults) == "matrix") {
-        # foreach returns a matrix of errors if running FUN >1 times.
-        cat(returnEarly("\nFUN returned all errors: ",NewResults[1,]$message,"."),sep = "")
-        optObj$stopStatus <- paste0("Error in FUN: ",NewResults[1,]$message)
-        return(optObj)
-      }
-
-    }
 
     # Print updates on parameter-score search
     if (verbose > 1) {
@@ -239,9 +256,14 @@ addIterations <- function(
     # Plotting
     if(plotProgress) plot(optObj)
 
-  }
+    # Check for change in stop status before we continue.
+    if (optObj$stopStatus != "OK") {
+      printStopStatus(optObj,verbose)
+      optObj$elapsedTime <- totalTime(optObj,startT)
+      return(optObj)
+    }
 
-  optObj$stopStatus <- "OK"
+  }
 
   return(optObj)
 

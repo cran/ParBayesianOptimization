@@ -8,18 +8,20 @@ addIterations(
   optObj,
   iters.n = 1,
   iters.k = 1,
+  otherHalting = list(timeLimit = Inf, minUtility = 0),
   bounds = optObj$bounds,
-  kern = optObj$optPars$kern,
   acq = optObj$optPars$acq,
   kappa = optObj$optPars$kappa,
   eps = optObj$optPars$eps,
   gsPoints = optObj$optPars$gsPoints,
   convThresh = optObj$optPars$convThresh,
   acqThresh = optObj$optPars$acqThresh,
+  errorHandling = "stop",
   saveFile = optObj$saveFile,
   parallel = FALSE,
-  plotProgress = TRUE,
-  verbose = 1
+  plotProgress = FALSE,
+  verbose = 1,
+  ...
 )
 }
 \arguments{
@@ -32,9 +34,9 @@ at each Epoch (optimization step). If running in parallel, good practice
 is to set \code{iters.k} to some multiple of the number of cores you have designated
 for this process. Must belower than, and preferrably some multiple of \code{iters.n}.}
 
-\item{bounds}{Same as bayesOpt()}
+\item{otherHalting}{Same as bayesOpt()}
 
-\item{kern}{Same as bayesOpt()}
+\item{bounds}{Same as bayesOpt()}
 
 \item{acq}{Same as bayesOpt()}
 
@@ -48,6 +50,8 @@ for this process. Must belower than, and preferrably some multiple of \code{iter
 
 \item{acqThresh}{Same as bayesOpt()}
 
+\item{errorHandling}{Same as bayesOpt()}
+
 \item{saveFile}{Same as bayesOpt()}
 
 \item{parallel}{Same as bayesOpt()}
@@ -55,6 +59,8 @@ for this process. Must belower than, and preferrably some multiple of \code{iter
 \item{plotProgress}{Same as bayesOpt()}
 
 \item{verbose}{Same as bayesOpt()}
+
+\item{...}{Same as bayesOpt()}
 }
 \value{
 A \code{bayesOpt} object.

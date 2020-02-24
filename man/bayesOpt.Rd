@@ -12,7 +12,7 @@ bayesOpt(
   initPoints = 4,
   iters.n = 3,
   iters.k = 1,
-  kern = "Matern52",
+  otherHalting = list(timeLimit = Inf, minUtility = 0),
   acq = "ucb",
   kappa = 2.576,
   eps = 0,
@@ -20,8 +20,10 @@ bayesOpt(
   gsPoints = pmax(100, length(bounds)^3),
   convThresh = 1e+08,
   acqThresh = 1,
-  plotProgress = TRUE,
-  verbose = 1
+  errorHandling = "stop",
+  plotProgress = FALSE,
+  verbose = 1,
+  ...
 )
 }
 \arguments{
@@ -52,13 +54,12 @@ at each Epoch (optimization step). If running in parallel, good practice
 is to set \code{iters.k} to some multiple of the number of cores you have designated
 for this process. Must belower than, and preferrably some multiple of \code{iters.n}.}
 
-\item{kern}{A character string representing one of \code{GauPro_kernel_beta}
-  S6 classes. Determines the covariance function used in the gaussian process. Can be one of:
+\item{otherHalting}{A list of other halting specifications. The process will stop if any of
+  the following is true. These checks are only performed in between optimization steps:
 \itemize{
-  \item \code{"Gaussian"}
-  \item \code{"Exponential"}
-  \item \code{"Matern52"}
-  \item \code{"Matern32"}
+  \item The elapsed seconds is greater than the list element \code{timeLimit}.
+  \item The utility expected from the Gaussian process is less than the list element
+  \code{minUtility}.
 }}
 
 \item{acq}{acquisition function type to be used. Can be "ucb", "ei", "eips" or "poi".
@@ -103,6 +104,12 @@ If 1.0, only the global optimum will be used as a candidate
 parameter set. If 0.5, only local optimums with 50 percent of the utility
 of the global optimum will be used.}
 
+\item{errorHandling}{If FUN returns an error, how to proceed. All errors are
+stored in \code{scoreSummary}. Can be one of 3 options: "stop" stops the
+function running and returns results. "continue" keeps the process running.
+Passing an integer will allow the process to continue until that many errors
+have occured, after which the results will be returned.}
+
 \item{plotProgress}{Should the progress of the Bayesian optimization be
 printed? Top graph shows the score(s) obtained at each iteration.
 The bottom graph shows the estimated utility of each point.
@@ -113,6 +120,10 @@ can be confident you are close to an optimal parameter set.}
 \item{verbose}{Whether or not to print progress to the console.
 If 0, nothing will be printed. If 1, progress will be printed.
 If 2, progress and information about new parameter-score pairs will be printed.}
+
+\item{...}{Other parameters passed to \code{DiceKriging::km()}. All FUN inputs and scores
+are scaled from 0-1 before being passed to km. FUN inputs are scaled within \code{bounds},
+and scores are scaled by 0 = min(scores), 1 = max(scores).}
 }
 \value{
 A \code{bayesOpt} object, containing information about the process.
@@ -156,9 +167,11 @@ library("xgboost")
 
 data(agaricus.train, package = "xgboost")
 
-Folds <- list( Fold1 = as.integer(seq(1,nrow(agaricus.train$data),by = 3))
-             , Fold2 = as.integer(seq(2,nrow(agaricus.train$data),by = 3))
-             , Fold3 = as.integer(seq(3,nrow(agaricus.train$data),by = 3)))
+Folds <- list(
+    Fold1 = as.integer(seq(1,nrow(agaricus.train$data),by = 3))
+  , Fold2 = as.integer(seq(2,nrow(agaricus.train$data),by = 3))
+  , Fold3 = as.integer(seq(3,nrow(agaricus.train$data),by = 3))
+)
 
 scoringFunction <- function(max_depth, min_child_weight, subsample) {
 
@@ -186,9 +199,11 @@ scoringFunction <- function(max_depth, min_child_weight, subsample) {
      , verbose = 0
   )
 
-  return(list( Score = max(xgbcv$evaluation_log$test_auc_mean)
-             , nrounds = xgbcv$best_iteration
-  )
+  return(
+    list(
+        Score = max(xgbcv$evaluation_log$test_auc_mean)
+      , nrounds = xgbcv$best_iteration
+    )
   )
 }
 
@@ -204,7 +219,6 @@ ScoreResult <- bayesOpt(
   , initPoints = 3
   , iters.n = 2
   , iters.k = 1
-  , kern = "Matern52"
   , acq = "ei"
   , gsPoints = 10
   , parallel = FALSE
