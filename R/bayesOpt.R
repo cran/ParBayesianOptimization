@@ -25,7 +25,7 @@
 #' @param iters.k integer that specifies the number of times to sample FUN
 #'   at each Epoch (optimization step). If running in parallel, good practice
 #'   is to set \code{iters.k} to some multiple of the number of cores you have designated
-#'   for this process. Must belower than, and preferrably some multiple of \code{iters.n}.
+#'   for this process. Must be lower than, and preferrably some multiple of \code{iters.n}.
 #' @param otherHalting A list of other halting specifications. The process will stop if any of
 #'   the following is true. These checks are only performed in between optimization steps:
 #' \itemize{
@@ -176,7 +176,7 @@
 #'   , verbose = 1
 #' )
 #' }
-#' @importFrom data.table data.table setDT setcolorder := as.data.table copy .I setnames is.data.table
+#' @importFrom data.table data.table setDT setcolorder := as.data.table copy .I setnames is.data.table rbindlist
 #' @importFrom utils head tail
 #' @export
 bayesOpt <- function(
@@ -236,13 +236,13 @@ bayesOpt <- function(
 
   # Initialization Setup
   if (missing(initGrid) + missing(initPoints) != 1) stop("Please provide 1 of initGrid or initPoints, but not both.")
-  if (initPoints <= length(bounds)) stop("initPoints must be greater than the number of FUN inputs.")
   if (!missing(initGrid)) {
     setDT(initGrid)
     inBounds <- checkBounds(initGrid,bounds)
     inBounds <- as.logical(apply(inBounds,1,prod))
     if (any(!inBounds)) stop("initGrid not within bounds.")
     optObj$initPars$initialSample <- "User Provided Grid"
+    initPoints <- nrow(initGrid)
   } else {
     initGrid <- randParams(boundsDT, initPoints)
     optObj$initPars$initialSample <- "Latin Hypercube Sampling"
@@ -250,6 +250,7 @@ bayesOpt <- function(
   optObj$initPars$initGrid <- initGrid
   if (nrow(initGrid) <= 2) stop("Cannot initialize with less than 3 samples.")
   optObj$initPars$initPoints <- nrow(initGrid)
+  if (initPoints <= length(bounds)) stop("initPoints must be greater than the number of FUN inputs.")
 
   # Output from FUN is sunk into a temporary file.
   sinkFile <- file()
@@ -271,7 +272,7 @@ bayesOpt <- function(
     scoreSummary <- foreach(
         iter = 1:nrow(initGrid)
       , .options.multicore = list(preschedule=FALSE)
-      , .combine = rbind
+      , .combine = list
       , .multicombine = TRUE
       , .inorder = FALSE
       , .errorhandling = 'pass'
@@ -280,8 +281,26 @@ bayesOpt <- function(
     ) %op% {
 
       Params <- initGrid[get("iter"),]
-      Elapsed <- system.time(Result <- do.call(what = FUN, args = as.list(Params)))
-      if(!any(names(Result) == "Score")) stop("FUN must return list with element 'Score' at a minimum.")
+      Elapsed <- system.time(
+        Result <- tryCatch(
+          {
+            do.call(what = FUN, args = as.list(Params))
+          }
+          , error = function(e) e
+        )
+      )
+
+      # Make sure everything was returned in the correct format. Any errors here will be passed.
+      if (any(class(Result) %in% c("simpleError","error","condition"))) return(Result)
+      if (class(Result) != "list") stop("Object returned from FUN was not a list.")
+      resLengths <- lengths(Result)
+      if (!any(names(Result) == "Score")) stop("FUN must return list with element 'Score' at a minimum.")
+      if (!is.numeric(Result$Score)) stop("Score returned from FUN was not numeric.")
+      if(any(resLengths != 1)) {
+        badReturns <- names(Result)[which(resLengths != 1)]
+        stop("FUN returned these elements with length > 1: ",paste(badReturns,collapse = ","))
+      }
+
       data.table(Params,Elapsed = Elapsed[[3]],as.data.table(Result))
 
     }
@@ -289,9 +308,18 @@ bayesOpt <- function(
   while (sink.number() > 0) sink()
   if (verbose > 0) cat(" ",tm,"seconds\n")
 
-  # foreach passes errors as a vector.
-  if (!is.data.table(scoreSummary)) {
-    stop(paste0("FUN failed to run on initial try. First error returned was <<",scoreSummary[[1]],">>"))
+  # Scan our list for any simpleErrors. If any exist, stop the process and return the errors.
+  se <- which(sapply(scoreSummary,function(cl) any(class(cl) %in% c("simpleError","error","condition"))))
+  if(length(se) > 0) {
+    print(
+      data.table(
+          initGrid[se,]
+        , errorMessage = sapply(scoreSummary[se],function(x) x$message)
+      )
+    )
+    stop("Errors encountered in initialization are listed above.")
+  } else {
+    scoreSummary <- rbindlist(scoreSummary)
   }
 
   # Format scoreSummary table. Initial iteration is set to 0

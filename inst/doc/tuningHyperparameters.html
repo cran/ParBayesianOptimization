@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta name="author" content="Samuel Wilson" />
 
@@ -118,9 +117,6 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
-}
-#header {
-text-align: center;
 }
 #TOC {
 clear: both;
@@ -289,7 +285,8 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
 
 
@@ -393,13 +390,13 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>The console informs us that the process initialized by running <code>scoringFunction</code> 4 times. It then fit a Gaussian process to the parameter-score pairs, found the global optimum of the acquisition function, and ran <code>scoringFunction</code> again. This process continued until we had 7 parameter-score pairs. You can interrogate the <code>bayesOpt</code> object to see the results:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">optObj<span class="op">$</span>scoreSummary</a>
 <a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt;    Epoch Iteration max_depth min_child_weight subsample gpUtility acqOptimum inBounds Elapsed     Score nrounds errorMessage</span></a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt; 1:     0         1         9         5.863591 0.2585819        NA      FALSE     TRUE    0.46 0.9984373      11           NA</span></a>
-<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; 2:     0         2         4        10.154185 0.5230172        NA      FALSE     TRUE    0.33 0.9977907       7           NA</span></a>
-<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt; 3:     0         3         6        24.487949 0.8622225        NA      FALSE     TRUE    1.39 0.9988230      52           NA</span></a>
-<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt; 4:     0         4         2        17.988070 0.6821260        NA      FALSE     TRUE    0.23 0.9876197      10           NA</span></a>
-<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt; 5:     1         5         2         7.652206 1.0000000 0.8147956       TRUE     TRUE    0.19 0.9871587       8           NA</span></a>
-<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt; 6:     2         6         9         7.992101 0.2843360 0.7111638       TRUE     TRUE    0.31 0.9977847       7           NA</span></a>
-<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt; 7:     3         7         9         1.000000 0.2500000 0.8122421       TRUE     TRUE    0.36 0.9999503       9           NA</span></a></code></pre></div>
+<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt; 1:     0         1         9         5.863591 0.2585819        NA      FALSE     TRUE    0.22 0.9984373      11           NA</span></a>
+<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; 2:     0         2         4        10.154185 0.5230172        NA      FALSE     TRUE    0.17 0.9977907       7           NA</span></a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt; 3:     0         3         6        24.487949 0.8622225        NA      FALSE     TRUE    0.68 0.9988230      52           NA</span></a>
+<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt; 4:     0         4         2        17.988070 0.6821260        NA      FALSE     TRUE    0.14 0.9876197      10           NA</span></a>
+<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt; 5:     1         5         2         7.652206 1.0000000 0.8147956       TRUE     TRUE    0.09 0.9871587       8           NA</span></a>
+<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt; 6:     2         6         9         7.992101 0.2843360 0.7111638       TRUE     TRUE    0.14 0.9977847       7           NA</span></a>
+<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt; 7:     3         7         9         1.000000 0.2500000 0.8122421       TRUE     TRUE    0.17 0.9999503       9           NA</span></a></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw">getBestPars</span>(optObj)</a>
 <a class="sourceLine" id="cb6-2" title="2"><span class="co">#&gt; $max_depth</span></a>
 <a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; [1] 9</span></a>
