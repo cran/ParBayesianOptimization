@@ -326,15 +326,16 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h2>Practical Example</h2>
 <p>In this example, we will be using the agaricus.train dataset provided in the XGBoost package. Here, we load the packages, data, and create a folds object to be used in the scoring function.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(<span class="st">&quot;xgboost&quot;</span>)</a>
-<a class="sourceLine" id="cb1-2" title="2"><span class="kw">library</span>(<span class="st">&quot;ParBayesianOptimization&quot;</span>)</a>
-<a class="sourceLine" id="cb1-3" title="3"></a>
-<a class="sourceLine" id="cb1-4" title="4"><span class="kw">data</span>(agaricus.train, <span class="dt">package =</span> <span class="st">&quot;xgboost&quot;</span>)</a>
-<a class="sourceLine" id="cb1-5" title="5"></a>
-<a class="sourceLine" id="cb1-6" title="6">Folds &lt;-<span class="st"> </span><span class="kw">list</span>(</a>
-<a class="sourceLine" id="cb1-7" title="7">    <span class="dt">Fold1 =</span> <span class="kw">as.integer</span>(<span class="kw">seq</span>(<span class="dv">1</span>,<span class="kw">nrow</span>(agaricus.train<span class="op">$</span>data),<span class="dt">by =</span> <span class="dv">3</span>))</a>
-<a class="sourceLine" id="cb1-8" title="8">  , <span class="dt">Fold2 =</span> <span class="kw">as.integer</span>(<span class="kw">seq</span>(<span class="dv">2</span>,<span class="kw">nrow</span>(agaricus.train<span class="op">$</span>data),<span class="dt">by =</span> <span class="dv">3</span>))</a>
-<a class="sourceLine" id="cb1-9" title="9">  , <span class="dt">Fold3 =</span> <span class="kw">as.integer</span>(<span class="kw">seq</span>(<span class="dv">3</span>,<span class="kw">nrow</span>(agaricus.train<span class="op">$</span>data),<span class="dt">by =</span> <span class="dv">3</span>))</a>
-<a class="sourceLine" id="cb1-10" title="10">)</a></code></pre></div>
+<a class="sourceLine" id="cb1-2" title="2"><span class="co">#&gt; Warning: package &#39;xgboost&#39; was built under R version 4.0.3</span></a>
+<a class="sourceLine" id="cb1-3" title="3"><span class="kw">library</span>(<span class="st">&quot;ParBayesianOptimization&quot;</span>)</a>
+<a class="sourceLine" id="cb1-4" title="4"></a>
+<a class="sourceLine" id="cb1-5" title="5"><span class="kw">data</span>(agaricus.train, <span class="dt">package =</span> <span class="st">&quot;xgboost&quot;</span>)</a>
+<a class="sourceLine" id="cb1-6" title="6"></a>
+<a class="sourceLine" id="cb1-7" title="7">Folds &lt;-<span class="st"> </span><span class="kw">list</span>(</a>
+<a class="sourceLine" id="cb1-8" title="8">    <span class="dt">Fold1 =</span> <span class="kw">as.integer</span>(<span class="kw">seq</span>(<span class="dv">1</span>,<span class="kw">nrow</span>(agaricus.train<span class="op">$</span>data),<span class="dt">by =</span> <span class="dv">3</span>))</a>
+<a class="sourceLine" id="cb1-9" title="9">  , <span class="dt">Fold2 =</span> <span class="kw">as.integer</span>(<span class="kw">seq</span>(<span class="dv">2</span>,<span class="kw">nrow</span>(agaricus.train<span class="op">$</span>data),<span class="dt">by =</span> <span class="dv">3</span>))</a>
+<a class="sourceLine" id="cb1-10" title="10">  , <span class="dt">Fold3 =</span> <span class="kw">as.integer</span>(<span class="kw">seq</span>(<span class="dv">3</span>,<span class="kw">nrow</span>(agaricus.train<span class="op">$</span>data),<span class="dt">by =</span> <span class="dv">3</span>))</a>
+<a class="sourceLine" id="cb1-11" title="11">)</a></code></pre></div>
 <p>Now we need to define the scoring function. This function should, at a minimum, return a list with a <code>Score</code> element, which is the model evaluation metric we want to maximize. We can also retain other pieces of information created by the scoring function by including them as named elements of the returned list. In this case, we want to retain the optimal number of rounds determined by the <code>xgb.cv</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">scoringFunction &lt;-<span class="st"> </span><span class="cf">function</span>(max_depth, min_child_weight, subsample) {</a>
 <a class="sourceLine" id="cb2-2" title="2"></a>
@@ -379,7 +380,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb3-3" title="3">  , <span class="dt">min_child_weight =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">25</span>)</a>
 <a class="sourceLine" id="cb3-4" title="4">  , <span class="dt">subsample =</span> <span class="kw">c</span>(<span class="fl">0.25</span>, <span class="dv">1</span>)</a>
 <a class="sourceLine" id="cb3-5" title="5">)</a></code></pre></div>
-<p>We are now ready to put this all into the <code>BayesianOptimization</code> function.</p>
+<p>We are now ready to put this all into the <code>bayesOpt</code> function.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw">set.seed</span>(<span class="dv">1234</span>)</a>
 <a class="sourceLine" id="cb4-2" title="2">optObj &lt;-<span class="st"> </span><span class="kw">bayesOpt</span>(</a>
 <a class="sourceLine" id="cb4-3" title="3">    <span class="dt">FUN =</span> scoringFunction</a>
@@ -390,13 +391,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>The console informs us that the process initialized by running <code>scoringFunction</code> 4 times. It then fit a Gaussian process to the parameter-score pairs, found the global optimum of the acquisition function, and ran <code>scoringFunction</code> again. This process continued until we had 7 parameter-score pairs. You can interrogate the <code>bayesOpt</code> object to see the results:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">optObj<span class="op">$</span>scoreSummary</a>
 <a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt;    Epoch Iteration max_depth min_child_weight subsample gpUtility acqOptimum inBounds Elapsed     Score nrounds errorMessage</span></a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt; 1:     0         1         9         5.863591 0.2585819        NA      FALSE     TRUE    0.22 0.9984373      11           NA</span></a>
-<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; 2:     0         2         4        10.154185 0.5230172        NA      FALSE     TRUE    0.17 0.9977907       7           NA</span></a>
-<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt; 3:     0         3         6        24.487949 0.8622225        NA      FALSE     TRUE    0.68 0.9988230      52           NA</span></a>
-<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt; 4:     0         4         2        17.988070 0.6821260        NA      FALSE     TRUE    0.14 0.9876197      10           NA</span></a>
-<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt; 5:     1         5         2         7.652206 1.0000000 0.8147956       TRUE     TRUE    0.09 0.9871587       8           NA</span></a>
-<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt; 6:     2         6         9         7.992101 0.2843360 0.7111638       TRUE     TRUE    0.14 0.9977847       7           NA</span></a>
-<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt; 7:     3         7         9         1.000000 0.2500000 0.8122421       TRUE     TRUE    0.17 0.9999503       9           NA</span></a></code></pre></div>
+<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt; 1:     0         1         9         5.863591 0.2585819        NA      FALSE     TRUE    0.39 0.9984373      11           NA</span></a>
+<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; 2:     0         2         4        10.154185 0.5230172        NA      FALSE     TRUE    0.29 0.9977907       7           NA</span></a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt; 3:     0         3         6        24.487949 0.8622225        NA      FALSE     TRUE    1.31 0.9988230      52           NA</span></a>
+<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt; 4:     0         4         2        17.988070 0.6821260        NA      FALSE     TRUE    0.31 0.9876197      10           NA</span></a>
+<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt; 5:     1         5         2         7.652206 1.0000000 0.8147956       TRUE     TRUE    0.25 0.9871587       8           NA</span></a>
+<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt; 6:     2         6         9         7.992101 0.2843360 0.7111638       TRUE     TRUE    0.28 0.9977847       7           NA</span></a>
+<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt; 7:     3         7         9         1.000000 0.2500000 0.8122421       TRUE     TRUE    0.32 0.9999503       9           NA</span></a></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw">getBestPars</span>(optObj)</a>
 <a class="sourceLine" id="cb6-2" title="2"><span class="co">#&gt; $max_depth</span></a>
 <a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; [1] 9</span></a>

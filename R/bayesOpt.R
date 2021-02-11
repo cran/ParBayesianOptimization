@@ -85,7 +85,22 @@
 #' @param ... Other parameters passed to \code{DiceKriging::km()}. All FUN inputs and scores
 #' are scaled from 0-1 before being passed to km. FUN inputs are scaled within \code{bounds},
 #' and scores are scaled by 0 = min(scores), 1 = max(scores).
-#' @return A \code{bayesOpt} object, containing information about the process.
+#' @return An object of class \code{bayesOpt} containing information about the process.
+#' \itemize{
+#'   \item \code{FUN}          The scoring function.
+#'   \item \code{bounds}       The bounds originally supplied.
+#'   \item \code{iters}        The total iterations that have been run.
+#'   \item \code{initPars}     The initialization parameters.
+#'   \item \code{optPars}      The optimization parameters.
+#'   \item \code{GauProList}   A list containing information on the Gaussian Processes used in optimization.
+#'   \item \code{scoreSummary} A \code{data.table} with results from the execution of \code{FUN}
+#'   at different inputs. Includes information on the epoch, iteration, function inputs, score, and any other
+#'   information returned by \code{FUN}.
+#'   \item \code{stopStatus}   Information on what caused the function to stop running. Possible explenations are
+#'   time limit, minimum utility not met, errors in \code{FUN}, iters.n was reached, or the Gaussian Process encountered
+#'   an error.
+#'   \item \code{elapsedTime} The total time in seconds the function was executing.
+#' }
 #' @references Jasper Snoek, Hugo Larochelle, Ryan P. Adams (2012) \emph{Practical Bayesian Optimization of Machine Learning Algorithms}
 #'
 #' @section Vignettes:
@@ -114,67 +129,69 @@
 #'
 #' \dontrun{
 #' # Example 2 - Hyperparameter Tuning in xgboost
-#' library("xgboost")
+#' if (requireNamespace('xgboost', quietly = TRUE)) {
+#'   library("xgboost")
 #'
-#' data(agaricus.train, package = "xgboost")
+#'   data(agaricus.train, package = "xgboost")
 #'
-#' Folds <- list(
-#'     Fold1 = as.integer(seq(1,nrow(agaricus.train$data),by = 3))
-#'   , Fold2 = as.integer(seq(2,nrow(agaricus.train$data),by = 3))
-#'   , Fold3 = as.integer(seq(3,nrow(agaricus.train$data),by = 3))
-#' )
-#'
-#' scoringFunction <- function(max_depth, min_child_weight, subsample) {
-#'
-#'   dtrain <- xgb.DMatrix(agaricus.train$data,label = agaricus.train$label)
-#'
-#'   Pars <- list(
-#'       booster = "gbtree"
-#'     , eta = 0.01
-#'     , max_depth = max_depth
-#'     , min_child_weight = min_child_weight
-#'     , subsample = subsample
-#'     , objective = "binary:logistic"
-#'     , eval_metric = "auc"
+#'   Folds <- list(
+#'       Fold1 = as.integer(seq(1,nrow(agaricus.train$data),by = 3))
+#'     , Fold2 = as.integer(seq(2,nrow(agaricus.train$data),by = 3))
+#'     , Fold3 = as.integer(seq(3,nrow(agaricus.train$data),by = 3))
 #'   )
 #'
-#'   xgbcv <- xgb.cv(
-#'        params = Pars
-#'      , data = dtrain
-#'      , nround = 100
-#'      , folds = Folds
-#'      , prediction = TRUE
-#'      , showsd = TRUE
-#'      , early_stopping_rounds = 5
-#'      , maximize = TRUE
-#'      , verbose = 0
-#'   )
+#'   scoringFunction <- function(max_depth, min_child_weight, subsample) {
 #'
-#'   return(
-#'     list(
-#'         Score = max(xgbcv$evaluation_log$test_auc_mean)
-#'       , nrounds = xgbcv$best_iteration
+#'     dtrain <- xgb.DMatrix(agaricus.train$data,label = agaricus.train$label)
+#'
+#'     Pars <- list(
+#'         booster = "gbtree"
+#'       , eta = 0.01
+#'       , max_depth = max_depth
+#'       , min_child_weight = min_child_weight
+#'       , subsample = subsample
+#'       , objective = "binary:logistic"
+#'       , eval_metric = "auc"
 #'     )
+#'
+#'     xgbcv <- xgb.cv(
+#'          params = Pars
+#'        , data = dtrain
+#'        , nround = 100
+#'        , folds = Folds
+#'        , prediction = TRUE
+#'        , showsd = TRUE
+#'        , early_stopping_rounds = 5
+#'        , maximize = TRUE
+#'        , verbose = 0
+#'     )
+#'
+#'     return(
+#'       list(
+#'           Score = max(xgbcv$evaluation_log$test_auc_mean)
+#'         , nrounds = xgbcv$best_iteration
+#'       )
+#'     )
+#'   }
+#'
+#'   bounds <- list(
+#'       max_depth = c(2L, 10L)
+#'     , min_child_weight = c(1, 100)
+#'     , subsample = c(0.25, 1)
+#'   )
+#'
+#'   ScoreResult <- bayesOpt(
+#'       FUN = scoringFunction
+#'     , bounds = bounds
+#'     , initPoints = 3
+#'     , iters.n = 2
+#'     , iters.k = 1
+#'     , acq = "ei"
+#'     , gsPoints = 10
+#'     , parallel = FALSE
+#'     , verbose = 1
 #'   )
 #' }
-#'
-#' bounds <- list(
-#'     max_depth = c(2L, 10L)
-#'   , min_child_weight = c(1, 100)
-#'   , subsample = c(0.25, 1)
-#' )
-#'
-#' ScoreResult <- bayesOpt(
-#'     FUN = scoringFunction
-#'   , bounds = bounds
-#'   , initPoints = 3
-#'   , iters.n = 2
-#'   , iters.k = 1
-#'   , acq = "ei"
-#'   , gsPoints = 10
-#'   , parallel = FALSE
-#'   , verbose = 1
-#' )
 #' }
 #' @importFrom data.table data.table setDT setcolorder := as.data.table copy .I setnames is.data.table rbindlist
 #' @importFrom utils head tail
