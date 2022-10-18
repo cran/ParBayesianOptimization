@@ -1,3 +1,7 @@
+## ParBayesianOptimization 1.2.5
+### Changes  
+Fixed a reproducibility bug.
+
 ## ParBayesianOptimization 1.2.4
 ### Changes  
 Fixed a small bug that allowed duplicates to make their way into the candidate table.
