@@ -1,17 +1,20 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-[![Build
-Status](https://api.travis-ci.org/AnotherSamWilson/ParBayesianOptimization.svg)](https://travis-ci.org/AnotherSamWilson/ParBayesianOptimization)
+[![R-CMD-check](https://github.com/novica/ParBayesianOptimization/actions/workflows/R-CMD-check.yml/badge.svg)](https://github.com/novica/ParBayesianOptimization/actions/workflows/R-CMD-check.yml)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/ParBayesianOptimization)](https://CRAN.R-project.org/package=ParBayesianOptimization)
-[![DEV\_Version\_Badge](https://img.shields.io/badge/Dev-1.2.5-blue.svg)](https://CRAN.R-project.org/package=ParBayesianOptimization)
 [![CRAN\_Downloads](https://cranlogs.r-pkg.org/badges/grand-total/mltools)](https://CRAN.R-project.org/package=ParBayesianOptimization)
-[![Coverage
-Status](https://codecov.io/gh/AnotherSamWilson/ParBayesianOptimization/branch/master/graph/badge.svg)](https://codecov.io/gh/AnotherSamWilson/ParBayesianOptimization/branch/master)
+[![Coverage Status](https://codecov.io/gh/novica/ParBayesianOptimization/branch/main/graph/badge.svg)](https://app.codecov.io/gh/novica/ParBayesianOptimization/branch/main)
 
 # Parallelizable Bayesian Optimization
 
 <img src='vignettes/icon.png' align = 'right' height="300" />
+
+> **Note:** CRAN archived [this package](https://github.com/AnotherSamWilson/ParBayesianOptimization) on 2026-01-12 ("issues were not
+> corrected despite reminders") — the fatal check failure was a vignette
+> re-build error in `tuningHyperparameters.Rmd` that has since been fixed.
+> This fork continues maintenance under a new maintainer. See also this
+> [Reddit discussion](https://www.reddit.com/r/Rlanguage/comments/1pe1lm8/transferring_ownership_of_open_source_packages/).
 
 This README contains a thorough walkthrough of Bayesian optimization and
 the syntax needed to use this package, with simple and complex examples.
@@ -20,23 +23,23 @@ More information can be found in the package vignettes and manual.
 ## Table of Contents
 
   - [01 -
-    Installation](https://github.com/AnotherSamWilson/ParBayesianOptimization#Installation)  
+    Installation](https://github.com/novica/ParBayesianOptimization#Installation)  
   - [02 - Package
-    Process](https://github.com/AnotherSamWilson/ParBayesianOptimization#Package-Process)  
+    Process](https://github.com/novica/ParBayesianOptimization#Package-Process)  
   - [03 - Bayesian Optimization
-    Intuition](https://github.com/AnotherSamWilson/ParBayesianOptimization#Bayesian-Optimization-Intuition)  
+    Intuition](https://github.com/novica/ParBayesianOptimization#Bayesian-Optimization-Intuition)  
   - [04 - Simple
-    Example](https://github.com/AnotherSamWilson/ParBayesianOptimization#Simple-Example)  
+    Example](https://github.com/novica/ParBayesianOptimization#Simple-Example)  
   - [05 - Hyperparameter
-    Tuning](https://github.com/AnotherSamWilson/ParBayesianOptimization#Hyperparameter-Tuning)  
+    Tuning](https://github.com/novica/ParBayesianOptimization#Hyperparameter-Tuning)  
   - [06 - Running In
-    Parallel](https://github.com/AnotherSamWilson/ParBayesianOptimization#Running-In-Parallel)  
+    Parallel](https://github.com/novica/ParBayesianOptimization#Running-In-Parallel)  
   - [07 - Sampling Multiple Promising Points at
-    Once](https://github.com/AnotherSamWilson/ParBayesianOptimization#Sampling-Multiple-Promising-Points-at-Once)  
+    Once](https://github.com/novica/ParBayesianOptimization#Sampling-Multiple-Promising-Points-at-Once)  
   - [08 - How Long Should it Run
-    For?](https://github.com/AnotherSamWilson/ParBayesianOptimization#how-long-should-it-run-for)  
+    For?](https://github.com/novica/ParBayesianOptimization#how-long-should-it-run-for)  
   - [09 - Setting Stopping
-    Criteria](https://github.com/AnotherSamWilson/ParBayesianOptimization#Setting-Time-Limits-and-Other-Halting-Criteria)
+    Criteria](https://github.com/novica/ParBayesianOptimization#Setting-Time-Limits-and-Other-Halting-Criteria)
 
 ## Installation
 
@@ -52,7 +55,7 @@ using devtools:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("AnotherSamWilson/ParBayesianOptimization")
+devtools::install_github("novica/ParBayesianOptimization")
 ```
 
 ## Package Process
@@ -147,7 +150,7 @@ optimize. This function should return, at a minimum, a list with a Score
 element. You can also return other elements that you want to keep track
 of in each run of the scoring function, which we show in the section
 [Hyperparameter
-Tuning](https://github.com/AnotherSamWilson/ParBayesianOptimization#Hyperparameter-Tuning).
+Tuning](https://github.com/novica/ParBayesianOptimization#Hyperparameter-Tuning).
 
 ``` r
 simpleFunction <- function(x) dnorm(x,3,2)*1.5 + dnorm(x,7,1) + dnorm(x,10,2)
@@ -415,7 +418,7 @@ sets in the next round of scoring function runs.
 ## How Long Should it Run For?
 
 Going back to the example in [Simple
-Example](https://github.com/AnotherSamWilson/ParBayesianOptimization#Simple-Example),
+Example](https://github.com/novica/ParBayesianOptimization#Simple-Example),
 (if you let this run for a few more iterations and set `plotProgress =
 TRUE`) you will notice this chart is updated at each iteration:
 

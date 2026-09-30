@@ -85,7 +85,7 @@ updateGP <- function(optObj,bounds = optObj$bounds,verbose = 1, ...) {
       if (all(optObj$GauProList$scoreGP@covariance@range.val >= 1e-4)) break
 
       if (tries >= 10) {
-        cat("     - Could not obtain meaningful lengthscales.\n")
+        warning("Could not obtain meaningful lengthscales.")
         break
       }
 

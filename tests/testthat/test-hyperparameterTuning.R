@@ -7,6 +7,7 @@ testthat::test_that(
   , {
 
     skip_on_cran()
+    skip_if_not_installed("xgboost")
     library("xgboost")
     set.seed(0)
 
@@ -18,51 +19,102 @@ testthat::test_that(
       , Fold3 = as.integer(seq(3,nrow(agaricus.train$data),by = 3))
     )
 
-    scoringFunction <- function(
-        max_depth
-      , max_leaves
-      , min_child_weight
-      , subsample
-      , colsample_bytree
-      , gamma
-      , lambda
-      , alpha
-      ) {
 
-      dtrain <- xgb.DMatrix(agaricus.train$data,label = agaricus.train$label)
 
+    scoringFunction <- function(max_depth, max_leaves,
+                                min_child_weight, subsample,
+                                colsample_bytree, gamma, lambda, alpha,
+                                .debug = FALSE) {
+
+      # ---- Type coercion & scalarization ----
+      max_depth        <- as.integer(max_depth)[1]
+      max_leaves       <- as.integer(max_leaves)[1]
+      min_child_weight <- as.numeric(min_child_weight)[1]
+      subsample        <- as.numeric(subsample)[1]
+      colsample_bytree <- as.numeric(colsample_bytree)[1]
+      gamma            <- as.numeric(gamma)[1]
+      lambda           <- as.numeric(lambda)[1]
+      alpha            <- as.numeric(alpha)[1]
+
+      # ---- Data (assumes 'agaricus.train' and 'Folds' exist) ----
+      dtrain <- xgboost::xgb.DMatrix(
+        data  = agaricus.train$data,
+        label = agaricus.train$label
+      )
+
+      # Base params
       Pars <- list(
-        booster = "gbtree"
-        , eta = 0.001
-        , max_depth = max_depth
-        , max_leaves = max_leaves
-        , min_child_weight = min_child_weight
-        , subsample = subsample
-        , colsample_bytree = colsample_bytree
-        , gamma = gamma
-        , lambda = lambda
-        , alpha = alpha
-        , objective = "binary:logistic"
-        , eval_metric = "auc"
+        booster           = "gbtree",
+        eta               = 0.01,
+        max_depth         = max_depth,
+        min_child_weight  = min_child_weight,
+        subsample         = subsample,
+        colsample_bytree  = colsample_bytree,
+        gamma             = gamma,
+        lambda            = lambda,  # L2 reg
+        alpha             = alpha,   # L1 reg
+        objective         = "binary:logistic",
+        eval_metric       = "auc"
       )
 
-      xgbcv <- xgb.cv(
-        params = Pars
-        , data = dtrain
-        , nround = 100
-        , folds = Folds
-        , early_stopping_rounds = 5
-        , maximize = TRUE
-        , verbose = 0
+      # If max_leaves is requested, enable histogram/lossguide (so xgboost uses it)
+      if (!is.na(max_leaves) && max_leaves > 0L) {
+        Pars$tree_method <- "hist"
+        Pars$grow_policy <- "lossguide"
+        Pars$max_leaves  <- max_leaves
+        # It's common to leave max_depth as-is; alternatively set max_depth = 0
+        # Pars$max_depth <- 0L
+      }
+
+      # ---- Safe CV wrapper ----
+      xgbcv <- try(
+        xgboost::xgb.cv(
+          params                 = Pars,
+          data                   = dtrain,
+          nrounds                = 100,
+          folds                  = Folds,
+          prediction             = FALSE,
+          showsd                 = TRUE,
+          early_stopping_rounds  = 5,
+          maximize               = TRUE,
+          verbose                = 0
+        ),
+        silent = TRUE
       )
 
-      return(
-        list(
-            Score = max(xgbcv$evaluation_log$test_auc_mean)
-          , nrounds = xgbcv$best_iteration
-        )
+      # On error: return worst score but keep scalars so bayesOpt can proceed
+      if (inherits(xgbcv, "try-error")) {
+        if (isTRUE(.debug)) message("xgb.cv error: ", as.character(xgbcv))
+        return(list(Score = as.numeric(-Inf), BestNrounds = as.integer(1L)))
+      }
+
+      # ---- Scalar Score ----
+      score_vec <- as.numeric(xgbcv$evaluation_log$test_auc_mean)
+      if (!is.null(names(score_vec))) names(score_vec) <- NULL
+      Score <- as.numeric(max(score_vec, na.rm = TRUE))[1]
+
+      # ---- Scalar best nrounds ----
+      bi <- xgbcv$best_iteration
+      if (is.null(bi) || length(bi) != 1L || is.na(bi)) {
+        bi <- which.max(score_vec)
+        if (length(bi) != 1L || is.na(bi)) bi <- 1L
+      }
+      BestNrounds <- as.integer(bi)[1]
+
+      if (isTRUE(.debug)) {
+        cat(sprintf(
+          "DEBUG | Score len=%d val=%.6f | BestNrounds len=%d val=%d\n",
+          length(Score), Score, length(BestNrounds), BestNrounds
+        ))
+      }
+
+      list(
+        Score       = Score,        # must be scalar
+        BestNrounds = BestNrounds   # must be scalar
       )
     }
+
+
 
     bounds <- list(
       max_depth = c(1L, 5L)

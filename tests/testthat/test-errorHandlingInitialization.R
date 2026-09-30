@@ -29,7 +29,7 @@ testthat::test_that(
         , errorHandling = "continue"
         , verbose = 1
       )
-      , "Errors encountered in initialization are listed above."
+      , "Errors encountered in initialization:"
     )
 
   }
@@ -64,7 +64,7 @@ testthat::test_that(
         , errorHandling = 2
         , verbose = 1
       )
-      , "Errors encountered in initialization are listed above."
+      , "Errors encountered in initialization:"
     )
 
   }
@@ -99,7 +99,7 @@ testthat::test_that(
         , errorHandling = 2
         , verbose = 1
       )
-      , "Errors encountered in initialization are listed above."
+      , "Errors encountered in initialization:"
     )
 
   }
@@ -134,7 +134,7 @@ testthat::test_that(
         , errorHandling = 2
         , verbose = 1
       )
-      , "Errors encountered in initialization are listed above."
+      , "Errors encountered in initialization:"
     )
 
   }

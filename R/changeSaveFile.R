@@ -6,7 +6,6 @@
 #' filename and extension as a .RDS.
 #' @return The same \code{optObj} with the updated saveFile.
 #' @examples
-#' \dontrun{
 #' scoringFunction <- function(x) {
 #'   a <- exp(-(2-x)^2)*1.5
 #'   b <- exp(-(4-x)^2)*2
@@ -22,10 +21,9 @@
 #'   , initPoints = 3
 #'   , iters.n = 2
 #'   , gsPoints = 10
-#'   , saveFile = "filepath.RDS"
+#'   , saveFile = tempfile(fileext = ".RDS")
 #' )
-#' Results <- changeSaveFile(Results,saveFile = "DifferentFile.RDS")
-#' }
+#' Results <- changeSaveFile(Results,saveFile = tempfile(fileext = ".RDS"))
 #' @export
 changeSaveFile <- function(optObj,saveFile = NULL) {
 

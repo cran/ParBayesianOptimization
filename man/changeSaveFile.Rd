@@ -19,7 +19,6 @@ The same \code{optObj} with the updated saveFile.
 Use this to change the saveFile parameter in a pre-existing bayesOpt object.
 }
 \examples{
-\dontrun{
 scoringFunction <- function(x) {
   a <- exp(-(2-x)^2)*1.5
   b <- exp(-(4-x)^2)*2
@@ -35,8 +34,7 @@ Results <- bayesOpt(
   , initPoints = 3
   , iters.n = 2
   , gsPoints = 10
-  , saveFile = "filepath.RDS"
+  , saveFile = tempfile(fileext = ".RDS")
 )
-Results <- changeSaveFile(Results,saveFile = "DifferentFile.RDS")
-}
+Results <- changeSaveFile(Results,saveFile = tempfile(fileext = ".RDS"))
 }

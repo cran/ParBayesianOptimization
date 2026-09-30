@@ -105,7 +105,7 @@
 #'
 #' @section Vignettes:
 #'
-#' It is highly recommended to read the \href{https://github.com/AnotherSamWilson/ParBayesianOptimization}{GitHub} for examples.
+#' It is highly recommended to read the \href{https://github.com/novica/ParBayesianOptimization}{GitHub} for examples.
 #' There are also several vignettes available from the official \href{https://CRAN.R-project.org/package=ParBayesianOptimization}{CRAN Listing}.
 #'
 #' @examples
@@ -127,7 +127,7 @@
 #'   , gsPoints = 10
 #' )
 #'
-#' \dontrun{
+#' \donttest{
 #' # Example 2 - Hyperparameter Tuning in xgboost
 #' if (requireNamespace('xgboost', quietly = TRUE)) {
 #'   library("xgboost")
@@ -194,7 +194,7 @@
 #' }
 #' }
 #' @importFrom data.table data.table setDT setcolorder := as.data.table copy .I setnames is.data.table rbindlist
-#' @importFrom utils head tail
+#' @importFrom utils head tail capture.output
 #' @export
 bayesOpt <- function(
     FUN
@@ -328,13 +328,14 @@ bayesOpt <- function(
   # Scan our list for any simpleErrors. If any exist, stop the process and return the errors.
   se <- which(sapply(scoreSummary,function(cl) any(class(cl) %in% c("simpleError","error","condition"))))
   if(length(se) > 0) {
-    print(
-      data.table(
-          initGrid[se,]
-        , errorMessage = sapply(scoreSummary[se],function(x) x$message)
-      )
+    errTable <- data.table(
+        initGrid[se,]
+      , errorMessage = sapply(scoreSummary[se],function(x) x$message)
     )
-    stop("Errors encountered in initialization are listed above.")
+    stop(
+      "Errors encountered in initialization:\n"
+      , paste(capture.output(print(errTable)), collapse = "\n")
+    )
   } else {
     scoreSummary <- rbindlist(scoreSummary)
   }
@@ -351,7 +352,7 @@ bayesOpt <- function(
 
   # System.time function is not terribly precise for very small elapsed times.
   if(any(scoreSummary$Elapsed < 1) & acq == "eips") {
-    cat("\n   FUN elapsed time is too low to be precise. Switching acq to 'ei'.\n")
+    warning("FUN elapsed time is too low to be precise. Switching acq to 'ei'.")
     acq <- 'ei'
   }
 
