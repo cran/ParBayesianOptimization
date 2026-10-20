@@ -9,10 +9,11 @@
 \arguments{
 \item{x}{An object of class bayesOpt}
 
-\item{...}{Passed to \code{ggarrange()} when plots are stacked.}
+\item{...}{Passed to \code{patchwork::plot_layout()}, overriding the
+defaults \code{ncol = 1} and \code{guides = "collect"}.}
 }
 \value{
-an object of class \code{ggarrange} from the \code{ggpubr} package.
+A \code{patchwork} object, returned invisibly after printing.
 }
 \description{
 Returns 2 stacked plots - the top shows the results from FUN at each iteration.

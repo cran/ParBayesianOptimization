@@ -1,21 +1,21 @@
 ---
 title: "Tuning Hyperparameters"
-output: html
 vignette: >
   %\VignetteIndexEntry{Tuning Hyperparameters}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: "#>"
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
 backup_options <- options()
 options(width = 1000)
 set.seed(1991)
-xgbAvail <- requireNamespace('xgboost', quietly = TRUE)
+xgbAvail <- requireNamespace('xgboost', quietly = TRUE) &&
+  utils::packageVersion('xgboost') >= '3.0.0'
 ```
 
 ********
@@ -91,7 +91,7 @@ scoringFunction <- function(max_depth, min_child_weight, subsample) {
   Score     <- as.numeric(max(score_vec, na.rm = TRUE))[1]
 
   # Derive a scalar "best nrounds" robustly
-  bi <- xgbcv$best_iteration
+  bi <- xgbcv$early_stop$best_iteration
   if (is.null(bi) || length(bi) != 1 || is.na(bi)) {
     # fallback: the iteration where test AUC is maximized
     bi <- which.max(score_vec)

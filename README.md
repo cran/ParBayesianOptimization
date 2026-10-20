@@ -1,14 +1,12 @@
+# Parallelizable Bayesian Optimization <img src="man/figures/logo.png" align="right" height="139" alt="ParBayesianOptimization logo" />
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
-[![R-CMD-check](https://github.com/novica/ParBayesianOptimization/actions/workflows/R-CMD-check.yml/badge.svg)](https://github.com/novica/ParBayesianOptimization/actions/workflows/R-CMD-check.yml)
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/ParBayesianOptimization)](https://CRAN.R-project.org/package=ParBayesianOptimization)
-[![CRAN\_Downloads](https://cranlogs.r-pkg.org/badges/grand-total/mltools)](https://CRAN.R-project.org/package=ParBayesianOptimization)
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/novica/ParBayesianOptimization/actions/workflows/R-CMD-check.yml/badge.svg?branch=main)](https://github.com/novica/ParBayesianOptimization/actions/workflows/R-CMD-check.yml)
+[![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/ParBayesianOptimization)](https://CRAN.R-project.org/package=ParBayesianOptimization)
+[![CRAN\_Downloads](https://cranlogs.r-pkg.org/badges/grand-total/ParBayesianOptimization)](https://CRAN.R-project.org/package=ParBayesianOptimization)
+[![DOI](https://img.shields.io/badge/DOI-10.32614%2FCRAN.package.ParBayesianOptimization-blue)](https://doi.org/10.32614/CRAN.package.ParBayesianOptimization)
 [![Coverage Status](https://codecov.io/gh/novica/ParBayesianOptimization/branch/main/graph/badge.svg)](https://app.codecov.io/gh/novica/ParBayesianOptimization/branch/main)
-
-# Parallelizable Bayesian Optimization
-
-<img src='vignettes/icon.png' align = 'right' height="300" />
+<!-- badges: end -->
 
 > **Note:** CRAN archived [this package](https://github.com/AnotherSamWilson/ParBayesianOptimization) on 2026-01-12 ("issues were not
 > corrected despite reminders") — the fatal check failure was a vignette
@@ -18,7 +16,8 @@
 
 This README contains a thorough walkthrough of Bayesian optimization and
 the syntax needed to use this package, with simple and complex examples.
-More information can be found in the package vignettes and manual.
+More information can be found in the package vignettes, manual, and [this 
+article on TDS](https://towardsdatascience.com/a-parallel-implementation-of-bayesian-optimization-2ffcdb2733a2/).
 
 ## Table of Contents
 
@@ -83,7 +82,7 @@ in the following process:
 
 <center>
 
-<img src="vignettes/gpParBayesAnimationSmall.gif" style="display: block; margin: auto;" />
+<img src="man/figures/gpParBayesAnimationSmall.gif" style="display: block; margin: auto;" />
 
 </center>
 
@@ -116,7 +115,7 @@ well as the uncertainty bands:
 
 <center>
 
-<img src="vignettes/round1.png" width="648px" style="display: block; margin: auto;" />
+<img src="man/figures/round1.png" width="648px" style="display: block; margin: auto;" />
 
 </center>
 
@@ -138,7 +137,7 @@ follows:
 
 <center>
 
-<img src="vignettes/UtilityFunctions.png" width="648" style="display: block; margin: auto;" />
+<img src="man/figures/UtilityFunctions.png" width="648" style="display: block; margin: auto;" />
 
 </center>
 
@@ -267,7 +266,7 @@ scoringFunction <- function(max_depth, min_child_weight, subsample) {
   xgbcv <- xgb.cv(
       params = Pars
     , data = dtrain
-    , nround = 100
+    , nrounds = 100
     , folds = Folds
     , early_stopping_rounds = 5
     , maximize = TRUE
@@ -275,7 +274,7 @@ scoringFunction <- function(max_depth, min_child_weight, subsample) {
   )
 
   return(list(Score = max(xgbcv$evaluation_log$test_auc_mean)
-             , nrounds = xgbcv$best_iteration
+             , nrounds = xgbcv$early_stop$best_iteration
              )
          )
 }

@@ -1,18 +1,10 @@
 ---
 title: "Sampling Multiple Parameter Sets at Once"
-output: html
 vignette: >
   %\VignetteIndexEntry{Sampling Multiple Parameter Sets at Once}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-backup_options <- options()
-options(width = 1000)
-set.seed(1991)
-```
 
 ### Sampling Local Optimums
 
@@ -20,15 +12,9 @@ Sometimes we may want to sample multiple promising parameter sets at the same ti
   
 Using the ```acqThresh``` parameter, you can specify the minimum percentage utility of the global optimum required for a different local optimum to be considered. As an example, let's say we are optimizing 1 hyperparameter ```min_child_weight```, which is bounded between [0,5]. Our acquisition function may look like the following:
 
-```{r, eval = TRUE, echo=FALSE, out.width = "600px", fig.align = "center"}
-knitr::include_graphics("UCB.png")
-```
+![](UCB.png){width=600px fig-align="center"}
 
 In this case, there are 3 promising candidate parameters. We may want to run our scoring function on all 3. If ```acqThresh``` is set to be below ~0.95, and ```iters.k``` is set to at least 3, the process would use all 3 of the local maximums as candidate parameter sets in the next round of scoring function runs.
 
 ### Adding Noise  
 If there are only 2 local optimums, and ```iters.k``` is 3, we still need to obtain another parameter set to run. We could choose a random parameter set within the bounds, however it is usually more worthwhile to decrease uncertainty around the promising points. Therefore, ```bayesOpt``` will randomly select points around our local optimums to sample if there aren't enough local optimums to satisfy ```iters.k```.
-
-```{r revert_options, include=FALSE}
-options(backup_options)
-```

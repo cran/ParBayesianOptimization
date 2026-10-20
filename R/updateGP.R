@@ -32,43 +32,46 @@
 #' # with the most recent results. We can update it manually:
 #' Results <- updateGP(Results)
 #' @export
-updateGP <- function(optObj,bounds = optObj$bounds,verbose = 1, ...) {
+updateGP <- function(optObj, bounds = optObj$bounds, verbose = 1, ...) {
+  checkKmArgs(...)
 
   if (optObj$GauProList$gpUpToDate) {
-    if (verbose > 0) message("Gaussian Processes are already up to date.")
+    if (verbose > 0) {
+      message("Gaussian Processes are already up to date.")
+    }
     return(optObj)
   } else {
-
     boundsDT <- boundsToDT(bounds)
-    scoreSummary <- optObj$scoreSummary[get("inBounds") & is.na(get("errorMessage")),]
+    scoreSummary <- optObj$scoreSummary[
+      get("inBounds") & is.na(get("errorMessage")),
+    ]
     tries <- 1
 
     # We would like to set the trace to 0 by default in km.
     # The user can change this if they wish.
 
     # Parameters are 0-1 scaled, as are the scores.
-    X <- minMaxScale(scoreSummary[,boundsDT$N,with=FALSE], boundsDT)
+    X <- minMaxScale(scoreSummary[, boundsDT$N, with = FALSE], boundsDT)
     Z <- zeroOneScale(scoreSummary$Score)
 
     # Attempt to get a GP with nonzero lengthscale parameters
 
-    while(TRUE) {
-
+    repeat {
       sgp <- tryCatch(
         {
           km(
-            design = X
-            , response = Z
-            , control = list(trace = 0)
-            , ...
+            design = X,
+            response = Z,
+            control = list(trace = 0),
+            ...
           )
-        }
-        , error = function(e) {
+        },
+        error = function(e) {
           msg <- makeStopEarlyMessage(
             paste0(
-                "Returning results so far. Error encountered while training GP: <"
-              , conditionMessage(e)
-              , ">"
+              "Returning results so far. Error encountered while training GP: <",
+              conditionMessage(e),
+              ">"
             )
           )
           return(msg)
@@ -82,7 +85,9 @@ updateGP <- function(optObj,bounds = optObj$bounds,verbose = 1, ...) {
         optObj$GauProList$scoreGP <- sgp
       }
 
-      if (all(optObj$GauProList$scoreGP@covariance@range.val >= 1e-4)) break
+      if (all(optObj$GauProList$scoreGP@covariance@range.val >= 1e-4)) {
+        break
+      }
 
       if (tries >= 10) {
         warning("Could not obtain meaningful lengthscales.")
@@ -90,23 +95,19 @@ updateGP <- function(optObj,bounds = optObj$bounds,verbose = 1, ...) {
       }
 
       tries <- tries + 1
-
     }
 
     if (optObj$optPars$acq == "eips") {
       optObj$GauProList$timeGP <- km(
-        design = X
-        , response = zeroOneScale(scoreSummary$Elapsed)
-        , scaling = FALSE
-        , control = list(trace = 0)
+        design = X,
+        response = zeroOneScale(scoreSummary$Elapsed),
+        scaling = FALSE,
+        control = list(trace = 0)
       )
-
     }
 
     optObj$GauProList$gpUpToDate <- TRUE
-
   }
 
   return(optObj)
-
 }

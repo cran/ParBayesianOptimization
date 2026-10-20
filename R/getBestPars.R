@@ -27,16 +27,21 @@
 #' print(getBestPars(Results))
 #' @export
 getBestPars <- function(
-    optObj
-  , N = 1
+  optObj,
+  N = 1
 ) {
-
-  if (N > nrow(optObj$scoreSummary)) stop("N is greater than the iterations that have been run.")
-
-  if (N == 1) {
-    return(as.list(head(optObj$scoreSummary[order(-get("Score"))],1))[names(optObj$bounds)])
-  } else {
-    head(optObj$scoreSummary[order(-get("Score"))],N)[,names(optObj$bounds),with=FALSE]
+  if (N > nrow(optObj$scoreSummary)) {
+    stop("N is greater than the iterations that have been run.")
   }
 
+  if (N == 1) {
+    return(as.list(head(optObj$scoreSummary[order(-get("Score"))], 1))[names(
+      optObj$bounds
+    )])
+  } else {
+    head(optObj$scoreSummary[order(-get("Score"))], N)[,
+      names(optObj$bounds),
+      with = FALSE
+    ]
+  }
 }

@@ -1,29 +1,33 @@
 Package: ParBayesianOptimization
 Title: Parallel Bayesian Optimization of Hyperparameters
-Version: 1.3.0
+Version: 1.4.2
 Authors@R: c(
-    person("Novica", "Nakov", email = "nnovica@gmail.com", role = "cre"),
-    person("Samuel", "Wilson", email = "samwilson303@gmail.com", role = "aut"))
-Description: Fast, flexible framework for implementing Bayesian optimization of model
-	hyperparameters according to the methods described in Snoek et al. (2012)
-	<doi:10.48550/arXiv.1206.2944>.
-	The package allows the user to run scoring function in parallel, save intermediary
-	results, and tweak other aspects of the process to fully utilize the computing resources
-	available to the user.
+    person("Samuel", "Wilson", , "samwilson303@gmail.com", role = c("aut", "cph")),
+    person("Novica", "Nakov", , "nnovica@gmail.com", role = c("aut", "cre", "cph"),
+           comment = c(ORCID = "0009-0005-7773-7718"))
+  )
+Description: Fast, flexible framework for implementing Bayesian
+    optimization of model hyperparameters according to the methods
+    described in Snoek et al. (2012) <doi:10.48550/arXiv.1206.2944>.  The
+    package allows the user to run scoring function in parallel, save
+    intermediary results, and tweak other aspects of the process to fully
+    utilize the computing resources available to the user.
+License: GPL-2
 URL: https://github.com/novica/ParBayesianOptimization
 BugReports: https://github.com/novica/ParBayesianOptimization/issues
-Depends: R (>= 3.4)
-Imports: data.table (>= 1.11.8), DiceKriging, stats, foreach, dbscan,
-        lhs, crayon, ggplot2, ggpubr (>= 0.2.4)
-Suggests: knitr, xgboost, doParallel, testthat, quarto
-License: GPL-2
-Encoding: UTF-8
+Depends: R (>= 4.1)
+Imports: cli, data.table (>= 1.11.8), dbscan, DiceKriging, foreach,
+        ggplot2 (>= 3.3.0), graphics, lhs, patchwork, stats, utils
+Suggests: knitr, quarto, testthat (>= 3.1.8), withr, xgboost (>= 3.0.0)
 VignetteBuilder: quarto
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0
+Config/testthat/edition: 3
+Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2026-09-29 18:46:17 UTC; novica
-Author: Novica Nakov [cre],
-  Samuel Wilson [aut]
+Packaged: 2026-10-20 16:22:32 UTC; novica
+Author: Samuel Wilson [aut, cph],
+  Novica Nakov [aut, cre, cph] (ORCID:
+    <https://orcid.org/0009-0005-7773-7718>)
 Maintainer: Novica Nakov <nnovica@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-09-30 21:40:08 UTC
+Date/Publication: 2026-10-20 16:40:02 UTC

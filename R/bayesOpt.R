@@ -19,8 +19,11 @@
 #'   object is saved to the file after each epoch.
 #' @param initGrid user specified points to sample the scoring function, should
 #'   be a \code{data.frame} or \code{data.table} with identical column names as bounds.
+#'   Provide exactly one of \code{initGrid} and \code{initPoints}.
 #' @param initPoints Number of points to initialize the process with. Points are
-#'   chosen with latin hypercube sampling within the bounds supplied.
+#'   chosen with latin hypercube sampling within the bounds supplied. Must be
+#'   greater than the number of \code{FUN} inputs. Provide exactly one of
+#'   \code{initGrid} and \code{initPoints}.
 #' @param iters.n The total number of times FUN will be run after initialization.
 #' @param iters.k integer that specifies the number of times to sample FUN
 #'   at each Epoch (optimization step). If running in parallel, good practice
@@ -33,7 +36,7 @@
 #'   \item The utility expected from the Gaussian process is less than the list element
 #'   \code{minUtility}.
 #' }
-#' @param acq acquisition function type to be used. Can be "ucb", "ei", "eips" or "poi".
+#' @param acq acquisition function type to be used. One of "ucb" (the default), "ei", "eips" or "poi".
 #' \itemize{
 #'   \item \code{ucb}   Upper Confidence Bound
 #'   \item \code{ei}    Expected Improvement
@@ -129,7 +132,8 @@
 #'
 #' \donttest{
 #' # Example 2 - Hyperparameter Tuning in xgboost
-#' if (requireNamespace('xgboost', quietly = TRUE)) {
+#' if (requireNamespace('xgboost', quietly = TRUE) &&
+#'     utils::packageVersion('xgboost') >= '3.0.0') {
 #'   library("xgboost")
 #'
 #'   data(agaricus.train, package = "xgboost")
@@ -157,7 +161,7 @@
 #'     xgbcv <- xgb.cv(
 #'          params = Pars
 #'        , data = dtrain
-#'        , nround = 100
+#'        , nrounds = 100
 #'        , folds = Folds
 #'        , prediction = TRUE
 #'        , showsd = TRUE
@@ -169,7 +173,7 @@
 #'     return(
 #'       list(
 #'           Score = max(xgbcv$evaluation_log$test_auc_mean)
-#'         , nrounds = xgbcv$best_iteration
+#'         , nrounds = xgbcv$early_stop$best_iteration
 #'       )
 #'     )
 #'   }
@@ -183,7 +187,7 @@
 #'   ScoreResult <- bayesOpt(
 #'       FUN = scoringFunction
 #'     , bounds = bounds
-#'     , initPoints = 3
+#'     , initPoints = 4
 #'     , iters.n = 2
 #'     , iters.k = 1
 #'     , acq = "ei"
@@ -197,28 +201,31 @@
 #' @importFrom utils head tail capture.output
 #' @export
 bayesOpt <- function(
-    FUN
-  , bounds
-  , saveFile = NULL
-  , initGrid
-  , initPoints = 4
-  , iters.n = 3
-  , iters.k = 1
-  , otherHalting = list(timeLimit = Inf,minUtility = 0)
-  , acq = "ucb"
-  , kappa = 2.576
-  , eps = 0.0
-  , parallel = FALSE
-  , gsPoints = pmax(100,length(bounds)^3)
-  , convThresh = 1e8
-  , acqThresh = 1.000
-  , errorHandling = "stop"
-  , plotProgress = FALSE
-  , verbose = 1
-  , ...
+  FUN,
+  bounds,
+  saveFile = NULL,
+  initGrid = NULL,
+  initPoints = NULL,
+  iters.n = 3,
+  iters.k = 1,
+  otherHalting = list(timeLimit = Inf, minUtility = 0),
+  acq = c("ucb", "ei", "eips", "poi"),
+  kappa = 2.576,
+  eps = 0.0,
+  parallel = FALSE,
+  gsPoints = pmax(100, length(bounds)^3),
+  convThresh = 1e8,
+  acqThresh = 1.000,
+  errorHandling = "stop",
+  plotProgress = FALSE,
+  verbose = 1,
+  ...
 ) {
-
   startT <- Sys.time()
+  # The signature lists the options; checkParameters() validates them.
+  if (missing(acq)) {
+    acq <- "ucb"
+  }
 
   # Construct bayesOpt list
   optObj <- list()
@@ -231,33 +238,39 @@ bayesOpt <- function(
   optObj$GauProList <- list()
 
   # See if saveFile can be written to, and store saveFile if necessary.
-  optObj <- changeSaveFile(optObj,saveFile)
+  optObj <- changeSaveFile(optObj, saveFile)
 
   # Check the parameters
   checkParameters(
-      bounds
-    , iters.n
-    , iters.k
-    , otherHalting
-    , acq
-    , acqThresh
-    , errorHandling
-    , plotProgress
-    , parallel
-    , verbose
+    bounds,
+    iters.n,
+    iters.k,
+    otherHalting,
+    acq,
+    acqThresh,
+    errorHandling,
+    plotProgress,
+    parallel,
+    verbose
   )
+
+  checkKmArgs(...)
 
   # Formatting
   boundsDT <- boundsToDT(bounds)
   otherHalting <- formatOtherHalting(otherHalting)
 
   # Initialization Setup
-  if (missing(initGrid) + missing(initPoints) != 1) stop("Please provide 1 of initGrid or initPoints, but not both.")
-  if (!missing(initGrid)) {
+  if (is.null(initGrid) == is.null(initPoints)) {
+    stop("Please provide 1 of initGrid or initPoints, but not both.")
+  }
+  if (!is.null(initGrid)) {
     setDT(initGrid)
-    inBounds <- checkBounds(initGrid,bounds)
-    inBounds <- as.logical(apply(inBounds,1,prod))
-    if (any(!inBounds)) stop("initGrid not within bounds.")
+    inBounds <- checkBounds(initGrid, bounds)
+    inBounds <- as.logical(apply(inBounds, 1, prod))
+    if (!all(inBounds)) {
+      stop("initGrid not within bounds.")
+    }
     optObj$initPars$initialSample <- "User Provided Grid"
     initPoints <- nrow(initGrid)
   } else {
@@ -265,93 +278,154 @@ bayesOpt <- function(
     optObj$initPars$initialSample <- "Latin Hypercube Sampling"
   }
   optObj$initPars$initGrid <- initGrid
-  if (nrow(initGrid) <= 2) stop("Cannot initialize with less than 3 samples.")
+  if (nrow(initGrid) <= 2) {
+    stop("Cannot initialize with less than 3 samples.")
+  }
   optObj$initPars$initPoints <- nrow(initGrid)
-  if (initPoints <= length(bounds)) stop("initPoints must be greater than the number of FUN inputs.")
+  if (initPoints <= length(bounds)) {
+    stop("initPoints must be greater than the number of FUN inputs.")
+  }
 
   # Output from FUN is sunk into a temporary file.
+  # Only the sinks added here are removed; the user's own sinks stay open.
   sinkFile <- file()
+  userSinks <- sink.number()
   on.exit(
     {
-      while (sink.number() > 0) sink()
+      while (sink.number() > userSinks) {
+        sink()
+      }
       close(sinkFile)
     }
   )
 
   # Define processing function
   `%op%` <- ParMethod(parallel)
-  if(parallel) Workers <- getDoParWorkers() else Workers <- 1
+  if (parallel) {
+    Workers <- getDoParWorkers()
+  } else {
+    Workers <- 1
+  }
 
   # Run initialization
-  if (verbose > 0) cat("\nRunning initial scoring function",nrow(initGrid),"times in",Workers,"thread(s)...")
+  if (verbose > 0) {
+    cat(
+      "\nRunning initial scoring function",
+      nrow(initGrid),
+      "times in",
+      Workers,
+      "thread(s)..."
+    )
+  }
   sink(file = sinkFile)
-  tm <- system.time(
+  tm <- system.time({
     scoreSummary <- foreach(
-        iter = 1:nrow(initGrid)
-      , .options.multicore = list(preschedule=FALSE)
-      , .combine = list
-      , .multicombine = TRUE
-      , .inorder = FALSE
-      , .errorhandling = 'pass'
+      iter = seq_len(nrow(initGrid)),
+      .options.multicore = list(preschedule = FALSE),
+      .combine = list,
+      .multicombine = TRUE,
+      .inorder = FALSE,
+      .errorhandling = 'pass',
       #, .packages ='data.table'
-      , .verbose = FALSE
-    ) %op% {
+      .verbose = FALSE
+    ) %op%
+      {
+        Params <- initGrid[get("iter"), ]
+        Elapsed <- system.time({
+          Result <- tryCatch(
+            {
+              do.call(what = FUN, args = as.list(Params))
+            },
+            error = function(e) e
+          )
+        })
 
-      Params <- initGrid[get("iter"),]
-      Elapsed <- system.time(
-        Result <- tryCatch(
-          {
-            do.call(what = FUN, args = as.list(Params))
-          }
-          , error = function(e) e
-        )
-      )
+        # Make sure everything was returned in the correct format. Any errors here will be passed.
+        if (any(class(Result) %in% c("simpleError", "error", "condition"))) {
+          return(Result)
+        }
+        if (!inherits(x = Result, what = "list")) {
+          stop("Object returned from FUN was not a list.")
+        }
+        resLengths <- lengths(Result)
+        if (!any(names(Result) == "Score")) {
+          stop("FUN must return list with element 'Score' at a minimum.")
+        }
+        if (!is.numeric(Result$Score)) {
+          stop("Score returned from FUN was not numeric.")
+        }
+        if (any(resLengths != 1)) {
+          badReturns <- names(Result)[which(resLengths != 1)]
+          stop(
+            "FUN returned these elements with length > 1: ",
+            paste(badReturns, collapse = ",")
+          )
+        }
 
-      # Make sure everything was returned in the correct format. Any errors here will be passed.
-      if (any(class(Result) %in% c("simpleError","error","condition"))) return(Result)
-      if (!inherits(x = Result, what = "list")) stop("Object returned from FUN was not a list.")
-      resLengths <- lengths(Result)
-      if (!any(names(Result) == "Score")) stop("FUN must return list with element 'Score' at a minimum.")
-      if (!is.numeric(Result$Score)) stop("Score returned from FUN was not numeric.")
-      if(any(resLengths != 1)) {
-        badReturns <- names(Result)[which(resLengths != 1)]
-        stop("FUN returned these elements with length > 1: ",paste(badReturns,collapse = ","))
+        data.table(Params, Elapsed = Elapsed[[3]], as.data.table(Result))
       }
-
-      data.table(Params,Elapsed = Elapsed[[3]],as.data.table(Result))
-
-    }
-  )[[3]]
-  while (sink.number() > 0) sink()
-  if (verbose > 0) cat(" ",tm,"seconds\n")
+  })[[3]]
+  while (sink.number() > userSinks) {
+    sink()
+  }
+  if (verbose > 0) {
+    cat(" ", tm, "seconds\n")
+  }
 
   # Scan our list for any simpleErrors. If any exist, stop the process and return the errors.
-  se <- which(sapply(scoreSummary,function(cl) any(class(cl) %in% c("simpleError","error","condition"))))
-  if(length(se) > 0) {
+  se <- which(sapply(scoreSummary, function(cl) {
+    any(class(cl) %in% c("simpleError", "error", "condition"))
+  }))
+  if (length(se) > 0) {
     errTable <- data.table(
-        initGrid[se,]
-      , errorMessage = sapply(scoreSummary[se],function(x) x$message)
+      initGrid[se, ],
+      errorMessage = sapply(scoreSummary[se], function(x) x$message)
     )
     stop(
-      "Errors encountered in initialization:\n"
-      , paste(capture.output(print(errTable)), collapse = "\n")
+      "Errors encountered in initialization:\n",
+      paste(capture.output(print(errTable)), collapse = "\n")
     )
   } else {
     scoreSummary <- rbindlist(scoreSummary)
   }
 
   # Format scoreSummary table. Initial iteration is set to 0
-  scoreSummary[,("gpUtility") := rep(as.numeric(NA),nrow(scoreSummary))]
-  scoreSummary[,("acqOptimum") := rep(FALSE,nrow(scoreSummary))]
-  scoreSummary[,("Epoch") := rep(0,nrow(scoreSummary))]
-  scoreSummary[,("Iteration") := 1:nrow(scoreSummary)]
-  scoreSummary[,("inBounds") := rep(TRUE,nrow(scoreSummary))]
-  scoreSummary[,("errorMessage") := rep(NA,nrow(scoreSummary))]
-  extraRet <- setdiff(names(scoreSummary),c("Epoch","Iteration",boundsDT$N,"inBounds","Elapsed","Score","gpUtility","acqOptimum"))
-  setcolorder(scoreSummary,c("Epoch","Iteration",boundsDT$N,"gpUtility","acqOptimum","inBounds","Elapsed","Score",extraRet))
+  scoreSummary[, ("gpUtility") := rep(as.numeric(NA), nrow(scoreSummary))]
+  scoreSummary[, ("acqOptimum") := rep(FALSE, nrow(scoreSummary))]
+  scoreSummary[, ("Epoch") := rep(0, nrow(scoreSummary))]
+  scoreSummary[, ("Iteration") := seq_len(nrow(scoreSummary))]
+  scoreSummary[, ("inBounds") := rep(TRUE, nrow(scoreSummary))]
+  scoreSummary[, ("errorMessage") := rep(NA, nrow(scoreSummary))]
+  extraRet <- setdiff(
+    names(scoreSummary),
+    c(
+      "Epoch",
+      "Iteration",
+      boundsDT$N,
+      "inBounds",
+      "Elapsed",
+      "Score",
+      "gpUtility",
+      "acqOptimum"
+    )
+  )
+  setcolorder(
+    scoreSummary,
+    c(
+      "Epoch",
+      "Iteration",
+      boundsDT$N,
+      "gpUtility",
+      "acqOptimum",
+      "inBounds",
+      "Elapsed",
+      "Score",
+      extraRet
+    )
+  )
 
   # System.time function is not terribly precise for very small elapsed times.
-  if(any(scoreSummary$Elapsed < 1) & acq == "eips") {
+  if (any(scoreSummary$Elapsed < 1) && acq == "eips") {
     warning("FUN elapsed time is too low to be precise. Switching acq to 'ei'.")
     acq <- 'ei'
   }
@@ -369,25 +443,24 @@ bayesOpt <- function(
   optObj$GauProList$gpUpToDate <- FALSE
   optObj$iters <- nrow(scoreSummary)
   optObj$stopStatus <- "OK"
-  optObj$elapsedTime <- as.numeric(difftime(Sys.time(),startT,units = "secs"))
+  optObj$elapsedTime <- as.numeric(difftime(Sys.time(), startT, units = "secs"))
 
   # Save Intermediary Output
-  saveSoFar(optObj,0)
+  saveSoFar(optObj, 0)
 
   optObj <- addIterations(
-      optObj
-    , otherHalting = otherHalting
-    , iters.n = iters.n
-    , iters.k = iters.k
-    , parallel = parallel
-    , plotProgress = plotProgress
-    , errorHandling = errorHandling
-    , saveFile = saveFile
-    , verbose = verbose
-    , ...
+    optObj,
+    otherHalting = otherHalting,
+    iters.n = iters.n,
+    iters.k = iters.k,
+    parallel = parallel,
+    plotProgress = plotProgress,
+    errorHandling = errorHandling,
+    saveFile = saveFile,
+    verbose = verbose,
+    ...
   )
 
   return(optObj)
-
 }
 utils::globalVariables(c("."))

@@ -1,8 +1,4 @@
 ## ----setup, include = FALSE---------------------------------------------------
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
 backup_options <- options()
 options(width = 1000)
 set.seed(1991)

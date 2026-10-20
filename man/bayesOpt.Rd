@@ -8,12 +8,12 @@ bayesOpt(
   FUN,
   bounds,
   saveFile = NULL,
-  initGrid,
-  initPoints = 4,
+  initGrid = NULL,
+  initPoints = NULL,
   iters.n = 3,
   iters.k = 1,
   otherHalting = list(timeLimit = Inf, minUtility = 0),
-  acq = "ucb",
+  acq = c("ucb", "ei", "eips", "poi"),
   kappa = 2.576,
   eps = 0,
   parallel = FALSE,
@@ -42,10 +42,13 @@ specifies the location to save results as they are obtained. A \code{bayesOpt}
 object is saved to the file after each epoch.}
 
 \item{initGrid}{user specified points to sample the scoring function, should
-be a \code{data.frame} or \code{data.table} with identical column names as bounds.}
+be a \code{data.frame} or \code{data.table} with identical column names as bounds.
+Provide exactly one of \code{initGrid} and \code{initPoints}.}
 
 \item{initPoints}{Number of points to initialize the process with. Points are
-chosen with latin hypercube sampling within the bounds supplied.}
+chosen with latin hypercube sampling within the bounds supplied. Must be
+greater than the number of \code{FUN} inputs. Provide exactly one of
+\code{initGrid} and \code{initPoints}.}
 
 \item{iters.n}{The total number of times FUN will be run after initialization.}
 
@@ -62,7 +65,7 @@ for this process. Must be lower than, and preferrably some multiple of \code{ite
   \code{minUtility}.
 }}
 
-\item{acq}{acquisition function type to be used. Can be "ucb", "ei", "eips" or "poi".
+\item{acq}{acquisition function type to be used. One of "ucb" (the default), "ei", "eips" or "poi".
 \itemize{
   \item \code{ucb}   Upper Confidence Bound
   \item \code{ei}    Expected Improvement
@@ -178,7 +181,8 @@ Results <- bayesOpt(
 
 \donttest{
 # Example 2 - Hyperparameter Tuning in xgboost
-if (requireNamespace('xgboost', quietly = TRUE)) {
+if (requireNamespace('xgboost', quietly = TRUE) &&
+    utils::packageVersion('xgboost') >= '3.0.0') {
   library("xgboost")
 
   data(agaricus.train, package = "xgboost")
@@ -206,7 +210,7 @@ if (requireNamespace('xgboost', quietly = TRUE)) {
     xgbcv <- xgb.cv(
          params = Pars
        , data = dtrain
-       , nround = 100
+       , nrounds = 100
        , folds = Folds
        , prediction = TRUE
        , showsd = TRUE
@@ -218,7 +222,7 @@ if (requireNamespace('xgboost', quietly = TRUE)) {
     return(
       list(
           Score = max(xgbcv$evaluation_log$test_auc_mean)
-        , nrounds = xgbcv$best_iteration
+        , nrounds = xgbcv$early_stop$best_iteration
       )
     )
   }
@@ -232,7 +236,7 @@ if (requireNamespace('xgboost', quietly = TRUE)) {
   ScoreResult <- bayesOpt(
       FUN = scoringFunction
     , bounds = bounds
-    , initPoints = 3
+    , initPoints = 4
     , iters.n = 2
     , iters.k = 1
     , acq = "ei"

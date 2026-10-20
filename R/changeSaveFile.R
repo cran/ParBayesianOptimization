@@ -25,13 +25,21 @@
 #' )
 #' Results <- changeSaveFile(Results,saveFile = tempfile(fileext = ".RDS"))
 #' @export
-changeSaveFile <- function(optObj,saveFile = NULL) {
-
-  if (!inherits(x = optObj, what = "bayesOpt")) stop("optObj should be of class bayesOpt.")
+changeSaveFile <- function(optObj, saveFile = NULL) {
+  if (!inherits(x = optObj, what = "bayesOpt")) {
+    stop("optObj should be of class bayesOpt.")
+  }
 
   # See if saveFile can be written to.
   if (!is.null(saveFile)) {
-    if (toupper(substr(saveFile, nchar(saveFile)-4+1, nchar(saveFile))) != ".RDS") stop("saveFile is saved as an RDS using saveRDS() - please change file extension in saveFile parameter.")
+    if (
+      toupper(substr(saveFile, nchar(saveFile) - 4 + 1, nchar(saveFile))) !=
+        ".RDS"
+    ) {
+      stop(
+        "saveFile is saved as an RDS using saveRDS() - please change file extension in saveFile parameter."
+      )
+    }
   }
   optObj$saveFile <- saveFile
   return(optObj)
