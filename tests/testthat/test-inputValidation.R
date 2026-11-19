@@ -17,7 +17,7 @@ test_that("bayesOpt() rejects bad initial grids", {
 
   expect_error(
     bayesOpt(FUN, bounds, initGrid = outside, verbose = 0),
-    "initGrid not within bounds"
+    "not within"
   )
   expect_error(
     bayesOpt(FUN, bounds, initGrid = small, verbose = 0),
@@ -34,7 +34,7 @@ test_that("bayesOpt() rejects bad initial grids", {
       initPoints = 3,
       verbose = 0
     ),
-    "greater than the number of FUN inputs"
+    "greater than the number of"
   )
 })
 
@@ -76,7 +76,7 @@ test_that("addIterations() rejects objects it cannot continue", {
     class = "bayesOpt"
   )
 
-  expect_error(addIterations(unclass(optObj)), "must be of class bayesOpt")
+  expect_error(addIterations(unclass(optObj)), "must be of class")
   expect_error(addIterations(optObj, verbose = 0), "Not enough samples")
 })
 

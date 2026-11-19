@@ -1,6 +1,6 @@
 Package: ParBayesianOptimization
 Title: Parallel Bayesian Optimization of Hyperparameters
-Version: 1.4.2
+Version: 1.5.0
 Authors@R: c(
     person("Samuel", "Wilson", , "samwilson303@gmail.com", role = c("aut", "cph")),
     person("Novica", "Nakov", , "nnovica@gmail.com", role = c("aut", "cre", "cph"),
@@ -17,17 +17,18 @@ URL: https://github.com/novica/ParBayesianOptimization
 BugReports: https://github.com/novica/ParBayesianOptimization/issues
 Depends: R (>= 4.1)
 Imports: cli, data.table (>= 1.11.8), dbscan, DiceKriging, foreach,
-        ggplot2 (>= 3.3.0), graphics, lhs, patchwork, stats, utils
+        ggplot2 (>= 3.3.0), graphics, lhs, patchwork, rlang, stats,
+        utils
 Suggests: knitr, quarto, testthat (>= 3.1.8), withr, xgboost (>= 3.0.0)
 VignetteBuilder: quarto
 Config/roxygen2/version: 8.1.0
 Config/testthat/edition: 3
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2026-10-20 16:22:32 UTC; novica
+Packaged: 2026-11-19 14:09:38 UTC; VI2451
 Author: Samuel Wilson [aut, cph],
   Novica Nakov [aut, cre, cph] (ORCID:
     <https://orcid.org/0009-0005-7773-7718>)
 Maintainer: Novica Nakov <nnovica@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-10-20 16:40:02 UTC
+Date/Publication: 2026-11-19 15:50:08 UTC

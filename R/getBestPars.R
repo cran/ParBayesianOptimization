@@ -31,7 +31,9 @@ getBestPars <- function(
   N = 1
 ) {
   if (N > nrow(optObj$scoreSummary)) {
-    stop("N is greater than the iterations that have been run.")
+    cli::cli_abort(
+      "{.arg N} is greater than the iterations that have been run."
+    )
   }
 
   if (N == 1) {

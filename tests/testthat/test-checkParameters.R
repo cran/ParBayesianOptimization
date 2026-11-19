@@ -21,7 +21,7 @@ test_that("valid parameters pass", {
 })
 
 test_that("invalid parameters are errors", {
-  expect_error(checkArgs(iters.n = 1), "iters.n cannot be less than iters.k")
+  expect_error(checkArgs(iters.n = 1), "cannot be less than")
   expect_error(checkArgs(iters.n = 4.5), "must be integers")
   expect_error(checkArgs(iters.k = 1.5), "must be integers")
   expect_error(checkArgs(acq = "foo"), "Acquisition function not recognized")
@@ -35,14 +35,17 @@ test_that("invalid parameters are errors", {
   )
   expect_error(
     checkArgs(otherHalting = list(foo = 1)),
-    "otherHalting element not recognized"
+    "element not recognized"
   )
-  expect_error(checkArgs(bounds = c(x = 1)), "bounds must be a list")
+  expect_error(
+    checkArgs(bounds = c(x = 1)),
+    "must be a list of parameter bounds"
+  )
   expect_error(checkArgs(bounds = list(x = c(0, 1, 2))), "length 2")
-  expect_error(checkArgs(acqThresh = 1.5), "acqThresh must be in")
-  expect_error(checkArgs(acqThresh = -0.1), "acqThresh must be in")
-  expect_error(checkArgs(plotProgress = "yes"), "plotProgress must be logical")
-  expect_error(checkArgs(errorHandling = "foo"), "errorHandling is malformed")
+  expect_error(checkArgs(acqThresh = 1.5), "must be in \\[0,1\\]")
+  expect_error(checkArgs(acqThresh = -0.1), "must be in \\[0,1\\]")
+  expect_error(checkArgs(plotProgress = "yes"), "must be logical")
+  expect_error(checkArgs(errorHandling = "foo"), "is malformed")
 })
 
 test_that("parallel = TRUE needs a registered backend", {

@@ -6,6 +6,7 @@
 [![CRAN\_Downloads](https://cranlogs.r-pkg.org/badges/grand-total/ParBayesianOptimization)](https://CRAN.R-project.org/package=ParBayesianOptimization)
 [![DOI](https://img.shields.io/badge/DOI-10.32614%2FCRAN.package.ParBayesianOptimization-blue)](https://doi.org/10.32614/CRAN.package.ParBayesianOptimization)
 [![Coverage Status](https://codecov.io/gh/novica/ParBayesianOptimization/branch/main/graph/badge.svg)](https://app.codecov.io/gh/novica/ParBayesianOptimization/branch/main)
+[![ParBayesianOptimization status badge](https://novica.r-universe.dev/ParBayesianOptimization/badges/version)](https://novica.r-universe.dev/ParBayesianOptimization)
 <!-- badges: end -->
 
 > **Note:** CRAN archived [this package](https://github.com/AnotherSamWilson/ParBayesianOptimization) on 2026-01-12 ("issues were not

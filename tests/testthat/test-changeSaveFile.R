@@ -1,7 +1,7 @@
 optObj <- structure(list(saveFile = NULL), class = "bayesOpt")
 
 test_that("changeSaveFile() rejects objects that are not bayesOpt", {
-  expect_error(changeSaveFile(list(), "x.rds"), "class bayesOpt")
+  expect_error(changeSaveFile(list(), "x.rds"), "of class")
 })
 
 test_that("changeSaveFile() rejects extensions other than .rds", {

@@ -122,18 +122,18 @@ getLocalOptimums <- function(
     # Checking for convergence
     if (tryN >= 4) {
       if (verbose > 0) {
-        cat(
-          "\n     - Maximum convergence attempts exceeded - process is probably sampling random points."
-        )
+        cli::cli_inform(c(
+          " " = "- Maximum convergence attempts exceeded - process is probably sampling random points."
+        ))
       }
       continue <- FALSE
     } else if (
       max(LocalOptims$gpUtility) < acqN$base || !any(LocalOptims$gradCount > 2)
     ) {
       if (verbose > 0) {
-        cat(
-          "\n     - Convergence Not Found. Trying again with tighter parameters..."
-        )
+        cli::cli_inform(c(
+          " " = "- Convergence Not Found. Trying again with tighter parameters..."
+        ))
       }
       gsPoints <- gsPoints * (tryN + 1)
       convThresh <- reduceThresh(convThresh)

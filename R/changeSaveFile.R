@@ -27,7 +27,7 @@
 #' @export
 changeSaveFile <- function(optObj, saveFile = NULL) {
   if (!inherits(x = optObj, what = "bayesOpt")) {
-    stop("optObj should be of class bayesOpt.")
+    cli::cli_abort("{.arg optObj} should be of class {.cls bayesOpt}.")
   }
 
   # See if saveFile can be written to.
@@ -36,9 +36,10 @@ changeSaveFile <- function(optObj, saveFile = NULL) {
       toupper(substr(saveFile, nchar(saveFile) - 4 + 1, nchar(saveFile))) !=
         ".RDS"
     ) {
-      stop(
-        "saveFile is saved as an RDS using saveRDS() - please change file extension in saveFile parameter."
-      )
+      cli::cli_abort(c(
+        "{.arg saveFile} is saved as an RDS using {.fn saveRDS}.",
+        i = "Please change the file extension in {.arg saveFile} to {.file .RDS}."
+      ))
     }
   }
   optObj$saveFile <- saveFile

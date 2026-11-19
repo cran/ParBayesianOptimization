@@ -70,7 +70,7 @@ addIterations <- function(
 ) {
   startT <- Sys.time()
   if (!inherits(x = optObj, what = "bayesOpt")) {
-    stop("optObj must be of class bayesOpt")
+    cli::cli_abort("{.arg optObj} must be of class {.cls bayesOpt}.")
   }
 
   # Check the parameters
@@ -119,13 +119,8 @@ addIterations <- function(
   scoreSummary$inBounds <- as.logical(apply(inBounds, 1, prod))
   if (!all(scoreSummary$inBounds)) {
     nOut <- sum(!scoreSummary$inBounds)
-    warning(
-      cli::format_inline(
-        "Bounds have been tightened. {nOut} parameter set{?s} in ",
-        "scoreSummary {?is/are} outside the new bounds and will be ignored ",
-        "this round."
-      ),
-      call. = FALSE
+    cli::cli_warn(
+      "Bounds have been tightened. {nOut} parameter set{?s} in scoreSummary {?is/are} outside the new bounds and will be ignored this round."
     )
   }
   # updateGP() fits only on rows flagged inBounds, so store the new flags and
@@ -135,10 +130,10 @@ addIterations <- function(
     optObj$GauProList$gpUpToDate <- FALSE
   }
   if (sum(scoreSummary$inBounds & is.na(scoreSummary$errorMessage)) <= 2) {
-    stop(
-      "Not enough samples in scoreSummary to perform optimizations. ",
-      "At least 3 error-free samples within bounds are needed."
-    )
+    cli::cli_abort(c(
+      "Not enough samples in scoreSummary to perform optimizations.",
+      i = "At least 3 error-free samples within bounds are needed."
+    ))
   }
 
   # Output from FUN is sunk into a temporary file.
@@ -159,7 +154,7 @@ addIterations <- function(
     Epoch <- Epoch + 1
 
     if (verbose > 0) {
-      cat("\nStarting Epoch", Epoch, "\n")
+      cli::cli_inform("Starting Epoch {Epoch}")
     }
 
     # How many runs to make this session
@@ -167,7 +162,7 @@ addIterations <- function(
 
     # Fit GP
     if (verbose > 0) {
-      cat("  1) Fitting Gaussian Process...\n")
+      cli::cli_inform(c(" " = "1) Fitting Gaussian Process..."))
     }
     optObj <- updateGP(optObj, bounds = bounds, verbose = 0, ...)
 
@@ -180,9 +175,6 @@ addIterations <- function(
     }
 
     # Find local optimums of the acquisition function
-    if (verbose > 0) {
-      cat("  2) Running local optimum search...")
-    }
     tm <- system.time({
       LocalOptims <- getLocalOptimums(
         optObj,
@@ -192,7 +184,7 @@ addIterations <- function(
       )
     })[[3]]
     if (verbose > 0) {
-      cat("       ", tm, "seconds\n")
+      cli::cli_inform(c(" " = "2) Ran local optimum search: {tm} seconds."))
     }
 
     # Should we continue?
@@ -240,15 +232,6 @@ addIterations <- function(
 
     # Try to run the scoring function. If not all (but at least 1) new runs fail,
     # then foreach cannot call rbind correctly, and an error is thrown.
-    if (verbose > 0) {
-      cat(
-        "  3) Running FUN",
-        nrow(nextPars),
-        "times in",
-        Workers,
-        "thread(s)..."
-      )
-    }
     sink(file = sinkFile)
     tm <- system.time({
       NewResults <- foreach(
@@ -321,35 +304,43 @@ addIterations <- function(
     )
 
     if (verbose > 0) {
-      cat(" ", tm, "seconds\n")
+      cli::cli_inform(c(
+        " " = "3) Ran {.fn FUN} {nrow(nextPars)} time{?s} in {Workers} thread{?s}: {tm} seconds."
+      ))
     }
 
     # Print updates on parameter-score search
     if (verbose > 1) {
-      cat("\nResults from most recent parameter scoring:\n")
-      print(NewResults, row.names = FALSE)
+      # Plain message() keeps the table layout.
+      message(paste(
+        c(
+          "Results from most recent parameter scoring:",
+          tableLines(NewResults, row.names = FALSE)
+        ),
+        collapse = "\n"
+      ))
 
       if (max(NewResults$Score) > max(scoreSummary$Score)) {
-        cat("\nNew best parameter set found:\n")
-        print(
-          NewResults[
-            which.max(get("Score")),
-            c(boundsDT$N, "Score"),
-            with = FALSE
-          ],
-          row.names = FALSE
-        )
+        bestHeading <- "New best parameter set found:"
+        bestFrom <- NewResults
       } else {
-        cat("\nMaximum score was not raised this round. Best score is still:\n")
-        print(
-          scoreSummary[
-            which.max(get("Score")),
-            c(boundsDT$N, "Score"),
-            with = FALSE
-          ],
-          row.names = FALSE
-        )
+        bestHeading <- "Maximum score was not raised this round. Best score is still:"
+        bestFrom <- scoreSummary
       }
+      message(paste(
+        c(
+          bestHeading,
+          tableLines(
+            bestFrom[
+              which.max(get("Score")),
+              c(boundsDT$N, "Score"),
+              with = FALSE
+            ],
+            row.names = FALSE
+          )
+        ),
+        collapse = "\n"
+      ))
     }
 
     # Keep track of performance.

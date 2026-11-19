@@ -27,5 +27,8 @@ test_that("N > 1 returns a data.table ordered by descending Score", {
 })
 
 test_that("N larger than the number of runs is an error", {
-  expect_error(getBestPars(fakeOptObj(), N = 4), "N is greater")
+  expect_error(
+    getBestPars(fakeOptObj(), N = 4),
+    "is greater than the iterations"
+  )
 })

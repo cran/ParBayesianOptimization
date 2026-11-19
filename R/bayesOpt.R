@@ -262,14 +262,16 @@ bayesOpt <- function(
 
   # Initialization Setup
   if (is.null(initGrid) == is.null(initPoints)) {
-    stop("Please provide 1 of initGrid or initPoints, but not both.")
+    cli::cli_abort(
+      "Please provide 1 of {.arg initGrid} or {.arg initPoints}, but not both."
+    )
   }
   if (!is.null(initGrid)) {
     setDT(initGrid)
     inBounds <- checkBounds(initGrid, bounds)
     inBounds <- as.logical(apply(inBounds, 1, prod))
     if (!all(inBounds)) {
-      stop("initGrid not within bounds.")
+      cli::cli_abort("{.arg initGrid} not within {.arg bounds}.")
     }
     optObj$initPars$initialSample <- "User Provided Grid"
     initPoints <- nrow(initGrid)
@@ -279,11 +281,13 @@ bayesOpt <- function(
   }
   optObj$initPars$initGrid <- initGrid
   if (nrow(initGrid) <= 2) {
-    stop("Cannot initialize with less than 3 samples.")
+    cli::cli_abort("Cannot initialize with less than 3 samples.")
   }
   optObj$initPars$initPoints <- nrow(initGrid)
   if (initPoints <= length(bounds)) {
-    stop("initPoints must be greater than the number of FUN inputs.")
+    cli::cli_abort(
+      "{.arg initPoints} must be greater than the number of {.fn FUN} inputs."
+    )
   }
 
   # Output from FUN is sunk into a temporary file.
@@ -308,15 +312,6 @@ bayesOpt <- function(
   }
 
   # Run initialization
-  if (verbose > 0) {
-    cat(
-      "\nRunning initial scoring function",
-      nrow(initGrid),
-      "times in",
-      Workers,
-      "thread(s)..."
-    )
-  }
   sink(file = sinkFile)
   tm <- system.time({
     scoreSummary <- foreach(
@@ -369,7 +364,9 @@ bayesOpt <- function(
     sink()
   }
   if (verbose > 0) {
-    cat(" ", tm, "seconds\n")
+    cli::cli_inform(
+      "Ran initial scoring function {nrow(initGrid)} time{?s} in {Workers} thread{?s}: {tm} seconds."
+    )
   }
 
   # Scan our list for any simpleErrors. If any exist, stop the process and return the errors.
@@ -381,9 +378,11 @@ bayesOpt <- function(
       initGrid[se, ],
       errorMessage = sapply(scoreSummary[se], function(x) x$message)
     )
-    stop(
-      "Errors encountered in initialization:\n",
-      paste(capture.output(print(errTable)), collapse = "\n")
+    rlang::abort(
+      paste(
+        c("Errors encountered in initialization:", tableLines(errTable)),
+        collapse = "\n"
+      )
     )
   } else {
     scoreSummary <- rbindlist(scoreSummary)
@@ -426,7 +425,9 @@ bayesOpt <- function(
 
   # System.time function is not terribly precise for very small elapsed times.
   if (any(scoreSummary$Elapsed < 1) && acq == "eips") {
-    warning("FUN elapsed time is too low to be precise. Switching acq to 'ei'.")
+    cli::cli_warn(
+      "{.fn FUN} elapsed time is too low to be precise. Switching {.arg acq} to {.val ei}."
+    )
     acq <- 'ei'
   }
 

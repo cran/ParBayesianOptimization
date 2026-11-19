@@ -37,7 +37,7 @@ updateGP <- function(optObj, bounds = optObj$bounds, verbose = 1, ...) {
 
   if (optObj$GauProList$gpUpToDate) {
     if (verbose > 0) {
-      message("Gaussian Processes are already up to date.")
+      cli::cli_inform("Gaussian Processes are already up to date.")
     }
     return(optObj)
   } else {
@@ -90,7 +90,7 @@ updateGP <- function(optObj, bounds = optObj$bounds, verbose = 1, ...) {
       }
 
       if (tries >= 10) {
-        warning("Could not obtain meaningful lengthscales.")
+        cli::cli_warn("Could not obtain meaningful lengthscales.")
         break
       }
 

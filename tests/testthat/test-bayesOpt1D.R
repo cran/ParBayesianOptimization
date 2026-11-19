@@ -181,3 +181,23 @@ test_that("addIterations() needs 3 usable samples within bounds", {
     "within bounds are needed"
   )
 })
+
+test_that("verbose output is sent as messages", {
+  skip_on_cran()
+  set.seed(1991)
+
+  run <- function() {
+    bayesOpt(
+      function(x) list(Score = -x^2),
+      list(x = c(-5, 5)),
+      initPoints = 4,
+      iters.n = 2,
+      verbose = 2
+    )
+  }
+
+  msgs <- paste(capture_messages(run()), collapse = "")
+  expect_match(msgs, "Starting Epoch 1")
+  expect_match(msgs, "Results from most recent parameter scoring")
+  expect_silent(suppressMessages(run()))
+})
